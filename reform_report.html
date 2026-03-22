@@ -721,7 +721,10 @@ async function doPrint() {
     const gap = 4;
     const cellW = (contentW - gap) / cols;
     const availH = A4H - y - PAD;
-    const cellH = (availH - gap * (rows2-1)) / rows2;
+    const cellHCalc = (availH - gap * (rows2-1)) / rows2;
+    // 最大セル高さを制限（1ページ目が大きくなりすぎないよう）
+    const cellHMax = page.type === 'first' ? 220 : 230;
+    const cellH = Math.min(cellHCalc, cellHMax);
 
     const imgPromises = page.photos.map(url => loadImage(url));
     const images = await Promise.all(imgPromises);
