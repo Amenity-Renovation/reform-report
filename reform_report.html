@@ -599,30 +599,22 @@ async function doPrint() {
     : '—';
   const today = new Date().toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric'});
 
-  // ページデータ組み立て
+  // ページデータ組み立て（全ページ統一：6枚）
+  const PHOTOS_PER_PAGE = 6;
   let pages = [];
   let isVeryFirstPage = true;
   spots.forEach(spot => {
     const photos = spot.photos.map(p => p.url);
     const name = spot.name || '（箇所名未入力）';
-    if (isVeryFirstPage) {
-      const g = photos.slice(0, 4); while (g.length < 4) g.push(null);
-      pages.push({ type: 'first', name, photos: g });
+    const perPage = isVeryFirstPage ? PHOTOS_PER_PAGE : PHOTOS_PER_PAGE;
+    let i = 0;
+    do {
+      const g = photos.slice(i, i + perPage);
+      while (g.length < perPage) g.push(null);
+      pages.push({ type: isVeryFirstPage ? 'first' : 'photo', name, photos: g });
       isVeryFirstPage = false;
-      let i = 4;
-      while (i < photos.length) {
-        const gg = photos.slice(i, i+8); while (gg.length < 8) gg.push(null);
-        pages.push({ type: 'photo', name, photos: gg }); i += 8;
-      }
-    } else {
-      let i = 0;
-      while (i < photos.length || i === 0) {
-        const g = photos.slice(i, i+8); while (g.length < 8) g.push(null);
-        pages.push({ type: 'photo', name, photos: g });
-        i += 8; if (i >= photos.length && photos.length > 0) break;
-        if (photos.length === 0) break;
-      }
-    }
+      i += perPage;
+    } while (i < photos.length);
   });
 
   // A4サイズ(px): 794×1123 @96dpi
@@ -637,8 +629,9 @@ async function doPrint() {
     return new Promise((resolve) => {
       if (!src) { resolve(null); return; }
       const img = new Image();
-      img.onload = () => resolve(img);
-      img.onerror = () => resolve(null);
+      const timer = setTimeout(() => resolve(null), 10000);
+      img.onload = () => { clearTimeout(timer); resolve(img); };
+      img.onerror = () => { clearTimeout(timer); resolve(null); };
       img.src = src;
     });
   }
@@ -715,16 +708,14 @@ async function doPrint() {
     ctx.fillText('📍 ' + page.name, PAD+10, y+20);
     y += 36;
 
-    // 写真グリッド
+    // 写真グリッド（全ページ統一：2列×3行＝6枚）
     const cols = 2;
-    const rows2 = page.type === 'first' ? 2 : 4;
+    const rows2 = 3;
     const gap = 4;
     const cellW = (contentW - gap) / cols;
     const availH = A4H - y - PAD;
-    const cellHCalc = (availH - gap * (rows2-1)) / rows2;
-    // 最大セル高さを制限（1ページ目が大きくなりすぎないよう）
-    const cellHMax = page.type === 'first' ? 220 : 230;
-    const cellH = Math.min(cellHCalc, cellHMax);
+    const cellHCalc = (availH - gap * (rows2 - 1)) / rows2;
+    const cellH = Math.min(cellHCalc, 270);
 
     const imgPromises = page.photos.map(url => loadImage(url));
     const images = await Promise.all(imgPromises);
