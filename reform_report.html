@@ -631,7 +631,7 @@ async function doPrint() {
         canvas.width = w; canvas.height = h;
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, w, h);
-        resolve({ dataUrl: canvas.toDataURL('image/jpeg', 0.88), w, h });
+        resolve({ dataUrl: canvas.toDataURL('image/jpeg', 0.82), w, h });
       };
       img.onerror = () => { clearTimeout(timer); resolve(null); };
       img.src = url;
@@ -655,22 +655,107 @@ async function doPrint() {
 
   // A4サイズ: 210mm x 297mm
   const PW = 210, PH = 297;
-  const PAD = 8; // ページ余白mm
-  const CW = PW - PAD * 2; // コンテンツ幅
+  const PAD = 8;
+  const CW = PW - PAD * 2;
 
-  // フォント設定（日本語はbase64フォント不要、描画はrectで代替）
-  function drawRect(pdf, x, y, w, h, fillColor, strokeColor) {
-    if (fillColor) { pdf.setFillColor(...fillColor); pdf.rect(x, y, w, h, 'F'); }
-    if (strokeColor) { pdf.setDrawColor(...strokeColor); pdf.setLineWidth(0.2); pdf.rect(x, y, w, h, 'S'); }
+  // 1mmあたりのpx換算 (96dpi: 1mm = 3.7795px)
+  const MM2PX = 3.7795;
+
+  // テキスト付きヘッダーをCanvasで描画してPDFに貼り込む（日本語文字化け回避）
+  function mmToPx(mm) { return Math.round(mm * MM2PX); }
+
+  async function drawHeaderCanvas(biz, prop, room, dateStr, wkr, today, note, spotName, cwMm, font) {
+    const W = mmToPx(cwMm);
+    const canvas = document.createElement('canvas');
+    canvas.width = W;
+    // 高さを計算
+    let h = 0;
+    const headerH = 40, rowH = 24, labelH = 22;
+    h += headerH; // タイトルバー
+    h += rowH * 5; // 物件情報5行
+    h += 6; // マージン
+    if (note.trim()) h += labelH + 30 + 6;
+    h += labelH; // 場所ラベル
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, W, h);
+
+    let y = 0;
+    // タイトルバー
+    ctx.fillStyle = '#2D5A3D';
+    ctx.fillRect(0, y, W, headerH);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = `bold ${font * 1.6}px 'Noto Sans JP', sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText('リフォーム作業報告書', W/2, y + headerH*0.58);
+    ctx.font = `${font * 0.9}px 'Noto Sans JP', sans-serif`;
+    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+    ctx.fillText('作成日：' + today, W/2, y + headerH*0.88);
+    y += headerH;
+
+    // 物件情報
+    const rows = [['事業者名', biz],['物件名', prop],['部屋番号', room],['作業日', dateStr],['担当者', wkr]];
+    rows.forEach((row, ri) => {
+      const ry = y + ri * rowH;
+      ctx.fillStyle = ri % 2 === 0 ? '#F4F2ED' : '#FAFAF8';
+      ctx.fillRect(0, ry, W, rowH);
+      ctx.fillStyle = '#D6D3CB';
+      ctx.fillRect(0, ry + rowH - 1, W, 1);
+      ctx.fillStyle = '#6A6A65';
+      ctx.font = `bold ${font * 0.85}px 'Noto Sans JP', sans-serif`;
+      ctx.textAlign = 'left';
+      ctx.fillText(row[0], 10, ry + rowH * 0.68);
+      ctx.fillStyle = '#1C1C1A';
+      ctx.font = `${font}px 'Noto Sans JP', sans-serif`;
+      ctx.fillText(row[1], W * 0.28, ry + rowH * 0.68);
+    });
+    y += rowH * 5 + 6;
+
+    // 特記事項
+    if (note.trim()) {
+      ctx.fillStyle = '#EAF0EC';
+      ctx.fillRect(0, y, W, labelH);
+      ctx.fillStyle = '#2D5A3D';
+      ctx.font = `bold ${font * 0.85}px 'Noto Sans JP', sans-serif`;
+      ctx.textAlign = 'left';
+      ctx.fillText('特記事項', 10, y + labelH * 0.72);
+      y += labelH;
+      ctx.fillStyle = '#F4F2ED';
+      ctx.fillRect(0, y, W, 30);
+      ctx.fillStyle = '#1C1C1A';
+      ctx.font = `${font * 0.82}px 'Noto Sans JP', sans-serif`;
+      ctx.fillText(note.replace(/\n/g,' ').substring(0, 70), 10, y + 20);
+      y += 36;
+    }
+
+    // 場所ラベル
+    ctx.fillStyle = '#EAF0EC';
+    ctx.fillRect(0, y, W, labelH);
+    ctx.fillStyle = '#2D5A3D';
+    ctx.font = `bold ${font}px 'Noto Sans JP', sans-serif`;
+    ctx.textAlign = 'left';
+    ctx.fillText('📍 ' + spotName, 10, y + labelH * 0.72);
+
+    return { dataUrl: canvas.toDataURL('image/png'), heightMm: h / MM2PX };
   }
 
-  function drawText(pdf, text, x, y, size, color, align) {
-    pdf.setFontSize(size);
-    pdf.setTextColor(...(color || [28,28,26]));
-    pdf.text(text, x, y, { align: align || 'left' });
+  async function drawSpotLabelCanvas(spotName, cwMm, font) {
+    const W = mmToPx(cwMm);
+    const labelH = 22;
+    const canvas = document.createElement('canvas');
+    canvas.width = W; canvas.height = labelH;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#EAF0EC';
+    ctx.fillRect(0, 0, W, labelH);
+    ctx.fillStyle = '#2D5A3D';
+    ctx.font = `bold ${font}px 'Noto Sans JP', sans-serif`;
+    ctx.textAlign = 'left';
+    ctx.fillText('📍 ' + spotName, 10, labelH * 0.72);
+    return { dataUrl: canvas.toDataURL('image/png'), heightMm: labelH / MM2PX };
   }
 
-  btn.textContent = '⏳ PDF生成中...';
+  const FONT_SIZE = 14; // px
 
   for (let pi = 0; pi < pages.length; pi++) {
     const page = pages[pi];
@@ -678,40 +763,18 @@ async function doPrint() {
 
     let y = PAD;
 
+    // ヘッダー or 場所ラベルをCanvasで描画
     if (page.type === 'first') {
-      // ヘッダー緑背景
-      drawRect(pdf, PAD, y, CW, 14, [45,90,61], null);
-      drawText(pdf, 'リフォーム作業報告書', PW/2, y+8, 16, [255,255,255], 'center');
-      drawText(pdf, '作成日：' + today, PW/2, y+13, 7, [200,235,210], 'center');
-      y += 17;
-
-      // 物件情報テーブル
-      const rows = [['事業者名', biz],['物件名', prop],['部屋番号', room],['作業日', dateStr],['担当者', wkr]];
-      const rowH = 6.5;
-      rows.forEach((row, ri) => {
-        const ry = y + ri * rowH;
-        drawRect(pdf, PAD, ry, 22, rowH, [244,242,237], [214,211,203]);
-        drawRect(pdf, PAD+22, ry, CW-22, rowH, [255,255,255], [214,211,203]);
-        drawText(pdf, row[0], PAD+2, ry+4.5, 7, [106,106,101]);
-        drawText(pdf, row[1], PAD+24, ry+4.5, 8, [28,28,26]);
-      });
-      y += rows.length * rowH + 3;
-
-      // 特記事項
-      if (note.trim()) {
-        drawRect(pdf, PAD, y, CW, 6, [234,240,236], null);
-        drawText(pdf, '特記事項', PAD+2, y+4.5, 7, [45,90,61]);
-        y += 7;
-        drawRect(pdf, PAD, y, CW, 8, [244,242,237], null);
-        drawText(pdf, note.replace(/\n/g,' ').substring(0,60), PAD+2, y+5.5, 7, [28,28,26]);
-        y += 10;
-      }
+      await document.fonts.ready;
+      const header = await drawHeaderCanvas(biz, prop, room, dateStr, wkr, today, note, page.name, CW, FONT_SIZE);
+      pdf.addImage(header.dataUrl, 'PNG', PAD, y, CW, header.heightMm);
+      y += header.heightMm + 2;
+    } else {
+      await document.fonts.ready;
+      const label = await drawSpotLabelCanvas(page.name, CW, FONT_SIZE);
+      pdf.addImage(label.dataUrl, 'PNG', PAD, y, CW, label.heightMm);
+      y += label.heightMm + 2;
     }
-
-    // 場所ラベル
-    drawRect(pdf, PAD, y, CW, 7, [234,240,236], null);
-    drawText(pdf, '📍 ' + page.name, PAD+2, y+5, 8, [45,90,61]);
-    y += 9;
 
     // 写真グリッド（2列×3行）
     const cols = 2, rows2 = 3, gap = 2;
@@ -726,7 +789,7 @@ async function doPrint() {
       const cx = PAD + col * (cellW + gap);
       const cy = y + row * (cellH + gap);
 
-      drawRect(pdf, cx, cy, cellW, cellH, [244,242,237], [214,211,203]);
+      pdf.setDrawColor(214,211,203); pdf.setLineWidth(0.2); pdf.rect(cx, cy, cellW, cellH, 'S');
 
       if (url) {
         try {
@@ -734,13 +797,21 @@ async function doPrint() {
           if (resized) {
             pdf.addImage(resized.dataUrl, 'JPEG', cx, cy, cellW, cellH, '', 'FAST');
           } else {
-            drawText(pdf, 'No Image', cx + cellW/2, cy + cellH/2, 7, [176,174,168], 'center');
+            pdf.setFillColor(244,242,237); pdf.rect(cx, cy, cellW, cellH, 'F');
           }
         } catch(e) {
-          drawText(pdf, 'No Image', cx + cellW/2, cy + cellH/2, 7, [176,174,168], 'center');
+          pdf.setFillColor(244,242,237); pdf.rect(cx, cy, cellW, cellH, 'F');
         }
       } else {
-        drawText(pdf, 'No Image', cx + cellW/2, cy + cellH/2, 7, [176,174,168], 'center');
+        // No Imageをcanvasで描画
+        const nc = document.createElement('canvas');
+        nc.width = mmToPx(cellW); nc.height = mmToPx(cellH);
+        const nctx = nc.getContext('2d');
+        nctx.fillStyle = '#F4F2ED'; nctx.fillRect(0,0,nc.width,nc.height);
+        nctx.strokeStyle = '#D6D3CB'; nctx.lineWidth = 1; nctx.strokeRect(0,0,nc.width,nc.height);
+        nctx.fillStyle = '#B0AEA8'; nctx.font = '14px sans-serif'; nctx.textAlign = 'center';
+        nctx.fillText('No Image', nc.width/2, nc.height/2 + 5);
+        pdf.addImage(nc.toDataURL('image/png'), 'PNG', cx, cy, cellW, cellH);
       }
     }
   }
@@ -750,6 +821,7 @@ async function doPrint() {
 
   btn.textContent = '📄 PDFとして保存・印刷';
   btn.disabled = false;
+}
 }
 
 // Init
