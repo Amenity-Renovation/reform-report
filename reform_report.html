@@ -589,9 +589,13 @@ function showSaveGuide() {
   }
 }
 
-function doPrint() {
+async function doPrint() {
   showSaveGuide();
   if (isIOSChrome()) return;
+
+  const btn = document.getElementById('btn-pdf-main');
+  btn.textContent = '⏳ PDF生成中...';
+  btn.disabled = true;
 
   const biz  = document.getElementById('biz_name').value  || '—';
   const prop = document.getElementById('prop_name').value || '（未入力）';
@@ -604,113 +608,175 @@ function doPrint() {
     : '—';
   const today = new Date().toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric'});
 
-  function photoCell(url) {
-    return url
-      ? `<div class="cell"><img src="${url}"></div>`
-      : `<div class="cell no-image">No Image</div>`;
-  }
-
-  // ページを組み立てる
-  // 1ページ目：物件情報 + 最初の場所の写真4枚
-  // 場所が変わったら必ず新ページ（8枚）
+  // ページデータ組み立て
   let pages = [];
   let isVeryFirstPage = true;
-
   spots.forEach(spot => {
     const photos = spot.photos.filter(p => p.active).map(p => p.url);
     const name = spot.name || '（箇所名未入力）';
-
     if (isVeryFirstPage) {
-      // 1ページ目：写真は4枚固定
-      const group = photos.slice(0, 4);
-      while (group.length < 4) group.push(null);
-      pages.push({ type: 'first', name, photos: group });
+      const g = photos.slice(0, 4); while (g.length < 4) g.push(null);
+      pages.push({ type: 'first', name, photos: g });
       isVeryFirstPage = false;
-      // 残り写真があれば8枚ずつ追加
       let i = 4;
       while (i < photos.length) {
-        const g = photos.slice(i, i + 8);
-        while (g.length < 8) g.push(null);
-        pages.push({ type: 'photo', name, photos: g });
-        i += 8;
+        const gg = photos.slice(i, i+8); while (gg.length < 8) gg.push(null);
+        pages.push({ type: 'photo', name, photos: gg }); i += 8;
       }
     } else {
-      // 2つ目以降の場所：必ず新ページから、8枚ずつ
-      const firstGroup = photos.slice(0, 8);
-      while (firstGroup.length < 8) firstGroup.push(null);
-      pages.push({ type: 'photo', name, photos: firstGroup });
-      let i = 8;
-      while (i < photos.length) {
-        const g = photos.slice(i, i + 8);
-        while (g.length < 8) g.push(null);
+      let i = 0;
+      while (i < photos.length || i === 0) {
+        const g = photos.slice(i, i+8); while (g.length < 8) g.push(null);
         pages.push({ type: 'photo', name, photos: g });
-        i += 8;
+        i += 8; if (i >= photos.length && photos.length > 0) break;
+        if (photos.length === 0) break;
       }
     }
   });
 
-  function renderFirstPage(page) {
-    return `<div class="a4-page">
-      <div class="page-header"><div class="page-title">リフォーム作業報告書</div><div class="page-date">作成日：${today}</div></div>
-      <div class="info-table">
-        <div class="info-row"><div class="info-key">事業者名</div><div class="info-val">${biz}</div></div>
-        <div class="info-row"><div class="info-key">物件名</div><div class="info-val">${prop}</div></div>
-        <div class="info-row"><div class="info-key">部屋番号</div><div class="info-val">${room}</div></div>
-        <div class="info-row"><div class="info-key">作業日</div><div class="info-val">${dateStr}</div></div>
-        <div class="info-row"><div class="info-key">担当者</div><div class="info-val">${wkr}</div></div>
-      </div>
-      ${note ? `<div class="spot-label">特記事項</div><div class="note-text">${note}</div>` : ''}
-      <div class="spot-label">📍 ${page.name}</div>
-      <div class="grid-4">${page.photos.map(photoCell).join('')}</div>
-    </div>`;
+  // A4サイズ(px): 794×1123 @96dpi
+  const A4W = 794, A4H = 1123;
+  const PAD = 40;
+
+  // 各ページをCanvasに描画してjsPDFに追加
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+
+  function loadImage(src) {
+    return new Promise((resolve) => {
+      if (!src) { resolve(null); return; }
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => resolve(null);
+      img.src = src;
+    });
   }
 
-  function renderPhotoPage(page) {
-    return `<div class="a4-page">
-      <div class="spot-label">📍 ${page.name}</div>
-      <div class="grid-8">${page.photos.map(photoCell).join('')}</div>
-    </div>`;
+  function roundRect(ctx, x, y, w, h, r, fill, stroke) {
+    ctx.beginPath();
+    ctx.moveTo(x+r, y);
+    ctx.lineTo(x+w-r, y); ctx.arcTo(x+w, y, x+w, y+r, r);
+    ctx.lineTo(x+w, y+h-r); ctx.arcTo(x+w, y+h, x+w-r, y+h, r);
+    ctx.lineTo(x+r, y+h); ctx.arcTo(x, y+h, x, y+h-r, r);
+    ctx.lineTo(x, y+r); ctx.arcTo(x, y, x+r, y, r);
+    ctx.closePath();
+    if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+    if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1; ctx.stroke(); }
   }
 
-  const pagesHTML = pages.map((p, i) => i === 0 ? renderFirstPage(p) : renderPhotoPage(p)).join('');
+  for (let pi = 0; pi < pages.length; pi++) {
+    const page = pages[pi];
+    const canvas = document.createElement('canvas');
+    canvas.width = A4W; canvas.height = A4H;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, A4W, A4H);
 
-  const printHTML = `<!DOCTYPE html>
-<html lang="ja"><head><meta charset="UTF-8"><title>リフォーム作業報告書</title>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
-*{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Noto Sans JP',sans-serif;background:white;}
-.a4-page{width:210mm;height:297mm;padding:10mm 12mm;page-break-after:always;overflow:hidden;display:flex;flex-direction:column;gap:5mm;}
-.a4-page:last-child{page-break-after:auto;}
-.page-header{background:#2D5A3D;color:white;padding:10px 16px;border-radius:6px;text-align:center;}
-.page-title{font-size:18px;font-weight:700;letter-spacing:0.06em;}
-.page-date{font-size:11px;opacity:0.75;margin-top:3px;}
-.info-table{border:1px solid #D6D3CB;border-radius:6px;overflow:hidden;}
-.info-row{display:flex;border-bottom:1px solid #D6D3CB;}
-.info-row:last-child{border-bottom:none;}
-.info-key{font-size:11px;font-weight:700;color:#6A6A65;min-width:72px;padding:6px 10px;background:#F4F2ED;flex-shrink:0;}
-.info-val{font-size:12px;padding:6px 10px;color:#1C1C1A;}
-.spot-label{font-size:13px;font-weight:700;background:#EAF0EC;color:#2D5A3D;padding:6px 10px;border-radius:6px;}
-.note-text{font-size:12px;color:#1C1C1A;padding:8px 10px;background:#F4F2ED;border-radius:6px;line-height:1.6;white-space:pre-wrap;}
-.grid-4{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:3px;flex:1;}
-.grid-8{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(4,1fr);gap:3px;flex:1;}
-.cell{overflow:hidden;border-radius:4px;border:1px solid #D6D3CB;background:#F4F2ED;}
-.cell img{width:100%;height:100%;object-fit:cover;display:block;}
-.no-image{display:flex;align-items:center;justify-content:center;font-size:12px;color:#B0AEA8;font-weight:500;}
-@media print{body{margin:0;}@page{margin:0;size:A4;}}
-</style></head><body>
-${pagesHTML}
-<script>window.onload=function(){window.print();}<\/script>
-</body></html>`;
+    let y = PAD;
+    const contentW = A4W - PAD * 2;
 
-  const win = window.open('', '_blank');
-  if (win) { win.document.write(printHTML); win.document.close(); }
-  else { alert('ポップアップがブロックされています。ブラウザの設定でポップアップを許可してください。'); }
+    if (page.type === 'first') {
+      // ヘッダー
+      roundRect(ctx, PAD, y, contentW, 52, 6, '#2D5A3D', null);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 22px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('リフォーム作業報告書', A4W/2, y+30);
+      ctx.font = '13px sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.8)';
+      ctx.fillText('作成日：' + today, A4W/2, y+48);
+      y += 62;
+
+      // 物件情報テーブル
+      const rows = [['事業者名', biz],['物件名', prop],['部屋番号', room],['作業日', dateStr],['担当者', wkr]];
+      const rowH = 28;
+      roundRect(ctx, PAD, y, contentW, rowH * rows.length, 6, null, '#D6D3CB');
+      rows.forEach((row, ri) => {
+        const ry = y + ri * rowH;
+        if (ri > 0) { ctx.beginPath(); ctx.moveTo(PAD, ry); ctx.lineTo(PAD+contentW, ry); ctx.strokeStyle='#D6D3CB'; ctx.lineWidth=1; ctx.stroke(); }
+        ctx.fillStyle = '#F4F2ED'; ctx.fillRect(PAD+1, ry+1, 90, rowH-1);
+        ctx.fillStyle = '#6A6A65'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'left';
+        ctx.fillText(row[0], PAD+10, ry+19);
+        ctx.fillStyle = '#1C1C1A'; ctx.font = '14px sans-serif';
+        ctx.fillText(row[1], PAD+100, ry+19);
+      });
+      y += rowH * rows.length + 12;
+
+      // 特記事項
+      if (note.trim()) {
+        roundRect(ctx, PAD, y, contentW, 22, 6, '#EAF0EC', null);
+        ctx.fillStyle = '#2D5A3D'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'left';
+        ctx.fillText('特記事項', PAD+10, y+16);
+        y += 26;
+        roundRect(ctx, PAD, y, contentW, 36, 4, '#F4F2ED', null);
+        ctx.fillStyle = '#1C1C1A'; ctx.font = '12px sans-serif';
+        ctx.fillText(note.replace(/\n/g,' ').substring(0,80), PAD+10, y+22);
+        y += 44;
+      }
+    } else {
+      y = PAD;
+    }
+
+    // 場所ラベル
+    ctx.textAlign = 'left';
+    roundRect(ctx, PAD, y, contentW, 28, 6, '#EAF0EC', null);
+    ctx.fillStyle = '#2D5A3D'; ctx.font = 'bold 14px sans-serif';
+    ctx.fillText('📍 ' + page.name, PAD+10, y+20);
+    y += 36;
+
+    // 写真グリッド
+    const cols = 2;
+    const rows2 = page.type === 'first' ? 2 : 4;
+    const gap = 4;
+    const cellW = (contentW - gap) / cols;
+    const availH = A4H - y - PAD;
+    const cellH = (availH - gap * (rows2-1)) / rows2;
+
+    const imgPromises = page.photos.map(url => loadImage(url));
+    const images = await Promise.all(imgPromises);
+
+    images.forEach((img, idx) => {
+      const col = idx % cols;
+      const row = Math.floor(idx / cols);
+      const cx = PAD + col * (cellW + gap);
+      const cy = y + row * (cellH + gap);
+      roundRect(ctx, cx, cy, cellW, cellH, 4, '#F4F2ED', '#D6D3CB');
+      if (img) {
+        // cover fit
+        const iR = img.width / img.height;
+        const cR = cellW / cellH;
+        let sw, sh, sx, sy;
+        if (iR > cR) { sh = img.height; sw = sh * cR; sx = (img.width-sw)/2; sy = 0; }
+        else { sw = img.width; sh = sw / cR; sx = 0; sy = (img.height-sh)/2; }
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect ? ctx.roundRect(cx, cy, cellW, cellH, 4) : ctx.rect(cx, cy, cellW, cellH);
+        ctx.clip();
+        ctx.drawImage(img, sx, sy, sw, sh, cx, cy, cellW, cellH);
+        ctx.restore();
+      } else {
+        ctx.fillStyle = '#B0AEA8'; ctx.font = '13px sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText('No Image', cx + cellW/2, cy + cellH/2 + 5);
+      }
+    });
+
+    // PDFに追加
+    const imgData = canvas.toDataURL('image/jpeg', 0.92);
+    if (pi > 0) pdf.addPage();
+    pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297);
+  }
+
+  const filename = (prop !== '（未入力）' ? prop : '報告書') + '_' + (room !== '—' ? room : '') + '.pdf';
+  pdf.save(filename);
+
+  btn.textContent = '📄 PDFとして保存・印刷';
+  btn.disabled = false;
 }
 
 // Init
 document.getElementById('work_date').value = new Date().toISOString().split('T')[0];
 addSpot();
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </body>
 </html>
