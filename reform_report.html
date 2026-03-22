@@ -408,9 +408,9 @@ async function doPrint() {
     } while (i < photos.length);
   });
 
-  // フォント待機
+  // フォント待機（Safari対応）
   await document.fonts.ready;
-  try { await Promise.all([document.fonts.load("bold 14px 'Noto Sans JP'"), document.fonts.load("14px 'Noto Sans JP'")]); } catch(e) {}
+  await new Promise(r => setTimeout(r, 500));
 
   // 写真リサイズ
   const urlSet = [...new Set(pdfPages.flatMap(p => p.photos).filter(Boolean))];
@@ -563,7 +563,9 @@ async function doPrint() {
 }
 
 // Init
-document.getElementById('work_date').value = new Date().toISOString().split('T')[0];
+const todayVal = new Date().toLocaleDateString('sv-SE'); // YYYY-MM-DD形式
+document.getElementById('work_date').setAttribute('value', todayVal);
+document.getElementById('work_date').value = todayVal;
 addSpot();
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
