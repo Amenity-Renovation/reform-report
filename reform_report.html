@@ -757,6 +757,23 @@ async function doPrint() {
 
   const FONT_SIZE = 14; // px
 
+  // 日本語フォントをCanvasで使える状態にする
+  await document.fonts.ready;
+  // フォントが確実にロードされるよう一度描画テスト
+  const testCanvas = document.createElement('canvas');
+  testCanvas.width = 100; testCanvas.height = 30;
+  const testCtx = testCanvas.getContext('2d');
+  testCtx.font = "bold 14px 'Noto Sans JP', sans-serif";
+  testCtx.fillText('テスト', 10, 20);
+
+  // フォント読み込みを明示的に待つ
+  try {
+    await Promise.all([
+      document.fonts.load("bold 14px 'Noto Sans JP'"),
+      document.fonts.load("14px 'Noto Sans JP'")
+    ]);
+  } catch(e) {}
+
   for (let pi = 0; pi < pages.length; pi++) {
     const page = pages[pi];
     if (pi > 0) pdf.addPage();
@@ -765,12 +782,10 @@ async function doPrint() {
 
     // ヘッダー or 場所ラベルをCanvasで描画
     if (page.type === 'first') {
-      await document.fonts.ready;
       const header = await drawHeaderCanvas(biz, prop, room, dateStr, wkr, today, note, page.name, CW, FONT_SIZE);
       pdf.addImage(header.dataUrl, 'PNG', PAD, y, CW, header.heightMm);
       y += header.heightMm + 2;
     } else {
-      await document.fonts.ready;
       const label = await drawSpotLabelCanvas(page.name, CW, FONT_SIZE);
       pdf.addImage(label.dataUrl, 'PNG', PAD, y, CW, label.heightMm);
       y += label.heightMm + 2;
@@ -821,7 +836,6 @@ async function doPrint() {
 
   btn.textContent = '📄 PDFとして保存・印刷';
   btn.disabled = false;
-}
 }
 
 // Init
