@@ -590,10 +590,106 @@ function showSaveGuide() {
 }
 
 function doPrint() {
-  buildPreview();
   showSaveGuide();
-  if (isIOSChrome()) return; // Chromeでは印刷ダイアログを出さない
-  setTimeout(() => window.print(), 150);
+  if (isIOSChrome()) return;
+
+  const biz  = document.getElementById('biz_name').value  || '—';
+  const prop = document.getElementById('prop_name').value || '（未入力）';
+  const room = document.getElementById('room_num').value  || '—';
+  const wd   = document.getElementById('work_date').value;
+  const wkr  = document.getElementById('worker').value   || '—';
+  const note = document.getElementById('notes').value;
+  const dateStr = wd
+    ? new Date(wd+'T00:00:00').toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric'})
+    : '—';
+  const today = new Date().toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric'});
+
+  function photoCell(url) {
+    return url
+      ? `<div class="cell"><img src="${url}"></div>`
+      : `<div class="cell no-image">No Image</div>`;
+  }
+
+  // ページを組み立てる
+  let pages = [];
+  let isFirstPhotoPage = true;
+
+  spots.forEach(spot => {
+    const photos = spot.photos.filter(p => p.active).map(p => p.url);
+    const name = spot.name || '（箇所名未入力）';
+    const perPage = isFirstPhotoPage ? 4 : 8;
+
+    const firstGroup = photos.slice(0, perPage);
+    while (firstGroup.length < perPage) firstGroup.push(null);
+    pages.push({ type: isFirstPhotoPage ? 'first' : 'photo', name, photos: firstGroup });
+    isFirstPhotoPage = false;
+
+    let i = perPage;
+    while (i < photos.length) {
+      const group = photos.slice(i, i + 8);
+      while (group.length < 8) group.push(null);
+      pages.push({ type: 'photo', name, photos: group });
+      i += 8;
+    }
+  });
+
+  function renderFirstPage(page) {
+    return `<div class="a4-page">
+      <div class="page-header"><div class="page-title">リフォーム作業報告書</div><div class="page-date">作成日：${today}</div></div>
+      <div class="info-table">
+        <div class="info-row"><div class="info-key">事業者名</div><div class="info-val">${biz}</div></div>
+        <div class="info-row"><div class="info-key">物件名</div><div class="info-val">${prop}</div></div>
+        <div class="info-row"><div class="info-key">部屋番号</div><div class="info-val">${room}</div></div>
+        <div class="info-row"><div class="info-key">作業日</div><div class="info-val">${dateStr}</div></div>
+        <div class="info-row"><div class="info-key">担当者</div><div class="info-val">${wkr}</div></div>
+      </div>
+      ${note ? `<div class="spot-label">特記事項</div><div class="note-text">${note}</div>` : ''}
+      <div class="spot-label">📍 ${page.name}</div>
+      <div class="grid-4">${page.photos.map(photoCell).join('')}</div>
+    </div>`;
+  }
+
+  function renderPhotoPage(page) {
+    return `<div class="a4-page">
+      <div class="spot-label">📍 ${page.name}</div>
+      <div class="grid-8">${page.photos.map(photoCell).join('')}</div>
+    </div>`;
+  }
+
+  const pagesHTML = pages.map((p, i) => i === 0 ? renderFirstPage(p) : renderPhotoPage(p)).join('');
+
+  const printHTML = `<!DOCTYPE html>
+<html lang="ja"><head><meta charset="UTF-8"><title>リフォーム作業報告書</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans JP',sans-serif;background:white;}
+.a4-page{width:210mm;height:297mm;padding:10mm 12mm;page-break-after:always;overflow:hidden;display:flex;flex-direction:column;gap:5mm;}
+.a4-page:last-child{page-break-after:auto;}
+.page-header{background:#2D5A3D;color:white;padding:10px 16px;border-radius:6px;text-align:center;}
+.page-title{font-size:18px;font-weight:700;letter-spacing:0.06em;}
+.page-date{font-size:11px;opacity:0.75;margin-top:3px;}
+.info-table{border:1px solid #D6D3CB;border-radius:6px;overflow:hidden;}
+.info-row{display:flex;border-bottom:1px solid #D6D3CB;}
+.info-row:last-child{border-bottom:none;}
+.info-key{font-size:11px;font-weight:700;color:#6A6A65;min-width:72px;padding:6px 10px;background:#F4F2ED;flex-shrink:0;}
+.info-val{font-size:12px;padding:6px 10px;color:#1C1C1A;}
+.spot-label{font-size:13px;font-weight:700;background:#EAF0EC;color:#2D5A3D;padding:6px 10px;border-radius:6px;}
+.note-text{font-size:12px;color:#1C1C1A;padding:8px 10px;background:#F4F2ED;border-radius:6px;line-height:1.6;white-space:pre-wrap;}
+.grid-4{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:3px;flex:1;}
+.grid-8{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(4,1fr);gap:3px;flex:1;}
+.cell{overflow:hidden;border-radius:4px;border:1px solid #D6D3CB;background:#F4F2ED;}
+.cell img{width:100%;height:100%;object-fit:cover;display:block;}
+.no-image{display:flex;align-items:center;justify-content:center;font-size:12px;color:#B0AEA8;font-weight:500;}
+@media print{body{margin:0;}@page{margin:0;size:A4;}}
+</style></head><body>
+${pagesHTML}
+<script>window.onload=function(){window.print();}<\/script>
+</body></html>`;
+
+  const win = window.open('', '_blank');
+  if (win) { win.document.write(printHTML); win.document.close(); }
+  else { alert('ポップアップがブロックされています。ブラウザの設定でポップアップを許可してください。'); }
 }
 
 // Init
