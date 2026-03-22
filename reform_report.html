@@ -412,26 +412,31 @@ async function doPrint() {
   await document.fonts.ready;
   await new Promise(r => setTimeout(r, 500));
 
-  // 写真リサイズ
+  // 写真リサイズ（1枚ずつ順番に処理してメモリ不足を防ぐ）
   const urlSet = [...new Set(pdfPages.flatMap(p => p.photos).filter(Boolean))];
   const resizeMap = new Map();
-  await Promise.all(urlSet.map(url => new Promise(resolve => {
-    const img = new Image();
-    const t = setTimeout(() => resolve(), 15000);
-    img.onload = () => {
-      clearTimeout(t);
-      const maxW = 1500;
-      const scale = Math.min(1, maxW / img.width);
-      const w = Math.round(img.width * scale), h = Math.round(img.height * scale);
-      const c = document.createElement('canvas');
-      c.width = w; c.height = h;
-      c.getContext('2d').drawImage(img, 0, 0, w, h);
-      resizeMap.set(url, c.toDataURL('image/jpeg', 0.82));
-      resolve();
-    };
-    img.onerror = () => { clearTimeout(t); resolve(); };
-    img.src = url;
-  })));
+  for (const url of urlSet) {
+    await new Promise(resolve => {
+      const img = new Image();
+      const t = setTimeout(() => resolve(), 15000);
+      img.onload = () => {
+        clearTimeout(t);
+        try {
+          const maxW = 1500;
+          const scale = Math.min(1, maxW / img.width);
+          const w = Math.round(img.width * scale), h = Math.round(img.height * scale);
+          const c = document.createElement('canvas');
+          c.width = w; c.height = h;
+          const ctx = c.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          resizeMap.set(url, c.toDataURL('image/jpeg', 0.82));
+        } catch(e) {}
+        resolve();
+      };
+      img.onerror = () => { clearTimeout(t); resolve(); };
+      img.src = url;
+    });
+  }
 
   btn.textContent = '⏳ PDF生成中...';
 
@@ -513,8 +518,8 @@ async function doPrint() {
     ctx.fillStyle = '#F4F2ED'; ctx.fillRect(0,0,W,H);
     ctx.strokeStyle = '#D6D3CB'; ctx.lineWidth = 1; ctx.strokeRect(0,0,W,H);
     ctx.fillStyle = '#B0AEA8'; ctx.textAlign = 'center';
-    ctx.font = '13px sans-serif';
-    ctx.fillText('No Image', W/2, H/2+5);
+    ctx.font = '22px sans-serif';
+    ctx.fillText('No Image', W/2, H/2 + 8);
     return canvas.toDataURL('image/png');
   }
 
