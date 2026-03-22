@@ -6,249 +6,83 @@
 <title>リフォーム報告書</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap');
-
 :root {
-  --green: #2D5A3D;
-  --green-light: #EAF0EC;
-  --gold: #B8832A;
-  --bg: #F4F2ED;
-  --white: #FFFFFF;
-  --text: #1C1C1A;
-  --sub: #6A6A65;
-  --border: #D6D3CB;
-  --danger: #B03030;
-  --radius: 12px;
+  --green:#2D5A3D;--green-light:#EAF0EC;--gold:#B8832A;
+  --bg:#F4F2ED;--white:#FFFFFF;--text:#1C1C1A;--sub:#6A6A65;
+  --border:#D6D3CB;--danger:#B03030;--radius:12px;
 }
-* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-body {
-  font-family: 'Noto Sans JP', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  padding-bottom: 90px;
-}
-.app-header {
-  background: var(--green);
-  color: white;
-  padding: 16px 18px 12px;
-  position: sticky;
-  top: 0;
-  z-index: 200;
-}
-.app-header h1 { font-size: 16px; font-weight: 700; letter-spacing: 0.05em; }
-.app-header .sub { font-family: 'DM Mono', monospace; font-size: 11px; opacity: 0.65; margin-top: 2px; }
-
-.tabs {
-  display: flex;
-  background: var(--white);
-  border-bottom: 1px solid var(--border);
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-.tabs::-webkit-scrollbar { display: none; }
-.tab {
-  flex: 1; min-width: 78px;
-  padding: 11px 6px;
-  font-size: 12px; font-weight: 500;
-  font-family: 'Noto Sans JP', sans-serif;
-  text-align: center;
-  cursor: pointer;
-  border: none; background: none;
-  color: var(--sub);
-  border-bottom: 2.5px solid transparent;
-  transition: all 0.2s;
-  white-space: nowrap;
-}
-.tab.active { color: var(--green); border-bottom-color: var(--green); font-weight: 700; }
-.tab.done { color: var(--green); }
-.tab.done::after { content: ' ✓'; font-size: 10px; }
-
-.section { display: none; padding: 16px; animation: fadeUp 0.2s ease; }
-.section.active { display: block; }
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-.card {
-  background: var(--white);
-  border-radius: var(--radius);
-  padding: 16px;
-  margin-bottom: 12px;
-  border: 1px solid var(--border);
-  box-shadow: 0 1px 6px rgba(0,0,0,0.06);
-}
-.card-title {
-  font-size: 11px; font-weight: 700;
-  letter-spacing: 0.1em; color: var(--green);
-  text-transform: uppercase;
-  margin-bottom: 14px; padding-bottom: 8px;
-  border-bottom: 1.5px solid var(--green-light);
-}
-
-.field { margin-bottom: 14px; }
-.field:last-child { margin-bottom: 0; }
-.field label { display: block; font-size: 12px; font-weight: 700; color: var(--sub); margin-bottom: 6px; letter-spacing: 0.03em; }
-.field label .req { color: var(--danger); margin-left: 2px; }
-input[type=text], input[type=date], textarea {
-  width: 100%; padding: 11px 13px;
-  border: 1.5px solid var(--border); border-radius: 8px;
-  font-size: 15px; font-family: 'Noto Sans JP', sans-serif;
-  color: var(--text); background: #FAFAF7;
-  transition: border-color 0.2s; outline: none;
-  -webkit-appearance: none;
-}
-input:focus, textarea:focus { border-color: var(--green); background: var(--white); }
-textarea { resize: vertical; min-height: 80px; line-height: 1.7; }
-.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-
-.btn {
-  display: flex; align-items: center; justify-content: center; gap: 6px;
-  width: 100%; padding: 13px 18px;
-  border: none; border-radius: 9px;
-  font-size: 14px; font-weight: 700;
-  font-family: 'Noto Sans JP', sans-serif;
-  cursor: pointer; transition: all 0.15s; letter-spacing: 0.03em;
-}
-.btn:active { transform: scale(0.97); }
-.btn-primary { background: var(--green); color: white; }
-.btn-outline { background: transparent; border: 1.5px solid var(--green); color: var(--green); }
-.btn-add { background: var(--green-light); color: var(--green); border: 1.5px dashed var(--green); }
-.btn-pdf { background: var(--gold); color: white; font-size: 16px; padding: 16px; }
-
-.bottom-bar {
-  position: fixed; bottom: 0; left: 0; right: 0;
-  background: var(--white); border-top: 1px solid var(--border);
-  padding: 10px 16px; display: flex; gap: 10px; z-index: 200;
-}
-.bottom-bar .btn { flex: 1; }
-
-.spot-item {
-  border: 1.5px solid var(--border); border-radius: 10px;
-  padding: 14px; margin-bottom: 12px;
-  background: var(--white);
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-}
-.spot-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-.spot-num {
-  font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500;
-  background: var(--green-light); color: var(--green); padding: 3px 9px; border-radius: 4px;
-}
-.btn-del { background: none; border: none; color: var(--danger); font-size: 22px; cursor: pointer; padding: 0 4px; line-height: 1; }
-
-.photo-zone {
-  border: 2px dashed var(--border); border-radius: 9px;
-  padding: 22px 16px; text-align: center; cursor: pointer;
-  background: #FAFAF7; transition: all 0.2s; margin-top: 10px; display: block;
-}
-.photo-zone:active { border-color: var(--green); background: var(--green-light); }
-.photo-zone input { display: none; }
-.photo-icon { font-size: 30px; }
-.photo-hint { font-size: 12px; color: var(--sub); margin-top: 6px; line-height: 1.5; }
-
-.photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
-.photo-thumb {
-  position: relative; aspect-ratio: 4/3;
-  border-radius: 7px; overflow: hidden; border: 1px solid var(--border);
-  touch-action: none; cursor: grab;
-  transition: transform 0.15s, box-shadow 0.15s;
-}
-.photo-thumb.dragging {
-  opacity: 0.5; transform: scale(0.95);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
-  z-index: 10;
-}
-.photo-thumb.drag-over { border: 2px solid var(--green); }
-.photo-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.photo-thumb-label {
-  position: absolute; bottom: 0; left: 0; right: 0;
-  background: rgba(0,0,0,0.55); color: white;
-  font-size: 10px; padding: 4px 7px; font-weight: 500;
-}
-.photo-thumb-del {
-  position: absolute; top: 4px; right: 4px;
-  background: rgba(0,0,0,0.6); color: white;
-  border: none; border-radius: 50%; width: 22px; height: 22px;
-  font-size: 13px; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-}
-
-/* Preview */
-.preview-wrap { background: var(--white); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; margin-bottom: 14px; }
-.preview-head { background: var(--green); color: white; padding: 20px; text-align: center; }
-.preview-head h2 { font-size: 18px; font-weight: 700; letter-spacing: 0.06em; }
-.preview-head .pdate { font-family: 'DM Mono', monospace; font-size: 11px; opacity: 0.75; margin-top: 5px; }
-.preview-body { padding: 16px; }
-.p-section { margin-bottom: 18px; }
-.p-section-title {
-  font-size: 11px; font-weight: 700; letter-spacing: 0.1em; color: var(--green);
-  text-transform: uppercase; padding-bottom: 6px;
-  border-bottom: 1.5px solid var(--green-light); margin-bottom: 10px;
-}
-.p-row { display: flex; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--bg); }
-.p-row:last-child { border-bottom: none; }
-.p-key { font-size: 12px; font-weight: 700; color: var(--sub); min-width: 80px; flex-shrink: 0; }
-.p-val { font-size: 13px; color: var(--text); flex: 1; line-height: 1.6; }
-.p-spot { margin-bottom: 16px; }
-.p-spot-name { font-size: 13px; font-weight: 700; background: var(--green-light); color: var(--green); padding: 6px 10px; border-radius: 6px; margin-bottom: 8px; }
-.p-photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-.p-photo { aspect-ratio: 4/3; border-radius: 6px; overflow: hidden; border: 1px solid var(--border); position: relative; }
-.p-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.p-photo-label { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.5); color: white; font-size: 10px; padding: 3px 6px; }
-.note-box { background: var(--bg); border-radius: 8px; padding: 12px; font-size: 13px; line-height: 1.7; color: var(--text); white-space: pre-wrap; }
-.print-note { font-size: 12px; color: var(--sub); text-align: center; margin-bottom: 12px; line-height: 1.7; }
-
-@media print {
-  body { background: white; padding: 0; margin: 0; }
-  .app-header, .tabs, .bottom-bar { display: none !important; }
-  .section { display: none !important; }
-  .section.active { display: block !important; padding: 0; }
-  .preview-wrap { border: none; box-shadow: none; }
-  .btn-pdf, .print-note, #save-guide { display: none !important; }
-  .preview-head { padding: 10px 16px; }
-  .preview-head h2 { font-size: 16px; }
-  .preview-body { padding: 8px 12px; }
-  .p-section { margin-bottom: 8px; }
-  .p-row { padding: 4px 0; }
-  .p-spot { margin-bottom: 0; }
-  .p-spot-name { margin-bottom: 4px; padding: 4px 8px; font-size: 12px; }
-  /* 写真グリッドを固定サイズのブロックとして扱う */
-  .print-photo-page {
-    page-break-inside: avoid;
-    break-inside: avoid;
-    page-break-before: auto;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 3px;
-    width: 100%;
-    margin-bottom: 3px;
-  }
-  .print-photo-page .p-photo {
-    height: 88px;
-    width: 100%;
-    overflow: hidden;
-    border-radius: 3px;
-    aspect-ratio: unset;
-    page-break-inside: avoid;
-    break-inside: avoid;
-  }
-  .print-photo-page .p-photo img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-  @page { margin: 8mm; size: A4; }
-}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:90px;}
+.app-header{background:var(--green);color:white;padding:16px 18px 12px;position:sticky;top:0;z-index:200;}
+.app-header h1{font-size:16px;font-weight:700;letter-spacing:.05em;}
+.app-header .sub{font-family:'DM Mono',monospace;font-size:11px;opacity:.65;margin-top:2px;}
+.tabs{display:flex;background:var(--white);border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{flex:1;min-width:78px;padding:11px 6px;font-size:12px;font-weight:500;font-family:'Noto Sans JP',sans-serif;text-align:center;cursor:pointer;border:none;background:none;color:var(--sub);border-bottom:2.5px solid transparent;transition:all .2s;white-space:nowrap;}
+.tab.active{color:var(--green);border-bottom-color:var(--green);font-weight:700;}
+.tab.done{color:var(--green);}
+.tab.done::after{content:' ✓';font-size:10px;}
+.section{display:none;padding:16px;animation:fadeUp .2s ease;}
+.section.active{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.card{background:var(--white);border-radius:var(--radius);padding:16px;margin-bottom:12px;border:1px solid var(--border);box-shadow:0 1px 6px rgba(0,0,0,.06);}
+.card-title{font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--green);text-transform:uppercase;margin-bottom:14px;padding-bottom:8px;border-bottom:1.5px solid var(--green-light);}
+.field{margin-bottom:14px;}
+.field:last-child{margin-bottom:0;}
+.field label{display:block;font-size:12px;font-weight:700;color:var(--sub);margin-bottom:6px;letter-spacing:.03em;}
+.field label .req{color:var(--danger);margin-left:2px;}
+input[type=text],input[type=date],textarea{width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:8px;font-size:15px;font-family:'Noto Sans JP',sans-serif;color:var(--text);background:#FAFAF7;transition:border-color .2s;outline:none;-webkit-appearance:none;}
+input:focus,textarea:focus{border-color:var(--green);background:var(--white);}
+textarea{resize:vertical;min-height:80px;line-height:1.7;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:13px 18px;border:none;border-radius:9px;font-size:14px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer;transition:all .15s;letter-spacing:.03em;}
+.btn:active{transform:scale(.97);}
+.btn-primary{background:var(--green);color:white;}
+.btn-outline{background:transparent;border:1.5px solid var(--green);color:var(--green);}
+.btn-add{background:var(--green-light);color:var(--green);border:1.5px dashed var(--green);}
+.btn-pdf{background:var(--gold);color:white;font-size:16px;padding:16px;}
+.bottom-bar{position:fixed;bottom:0;left:0;right:0;background:var(--white);border-top:1px solid var(--border);padding:10px 16px;display:flex;gap:10px;z-index:200;}
+.bottom-bar .btn{flex:1;}
+.spot-item{border:1.5px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;background:var(--white);box-shadow:0 1px 4px rgba(0,0,0,.04);}
+.spot-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.spot-num{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;background:var(--green-light);color:var(--green);padding:3px 9px;border-radius:4px;}
+.btn-del{background:none;border:none;color:var(--danger);font-size:22px;cursor:pointer;padding:0 4px;line-height:1;}
+.photo-zone{border:2px dashed var(--border);border-radius:9px;padding:22px 16px;text-align:center;cursor:pointer;background:#FAFAF7;transition:all .2s;margin-top:10px;display:block;}
+.photo-zone:active{border-color:var(--green);background:var(--green-light);}
+.photo-zone input{display:none;}
+.photo-icon{font-size:30px;}
+.photo-hint{font-size:12px;color:var(--sub);margin-top:6px;line-height:1.5;}
+.photo-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;}
+.photo-thumb{position:relative;aspect-ratio:4/3;border-radius:7px;overflow:hidden;border:1px solid var(--border);touch-action:none;cursor:grab;transition:transform .15s,box-shadow .15s;}
+.photo-thumb.dragging{opacity:.5;transform:scale(.95);box-shadow:0 4px 16px rgba(0,0,0,.18);z-index:10;}
+.photo-thumb.drag-over{border:2px solid var(--green);}
+.photo-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.photo-thumb-del{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.6);color:white;border:none;border-radius:50%;width:22px;height:22px;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.preview-wrap{background:var(--white);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;margin-bottom:14px;}
+.preview-head{background:var(--green);color:white;padding:20px;text-align:center;}
+.preview-head h2{font-size:18px;font-weight:700;letter-spacing:.06em;}
+.preview-head .pdate{font-family:'DM Mono',monospace;font-size:11px;opacity:.75;margin-top:5px;}
+.preview-body{padding:16px;}
+.p-section{margin-bottom:18px;}
+.p-section-title{font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--green);text-transform:uppercase;padding-bottom:6px;border-bottom:1.5px solid var(--green-light);margin-bottom:10px;}
+.p-row{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--bg);}
+.p-row:last-child{border-bottom:none;}
+.p-key{font-size:12px;font-weight:700;color:var(--sub);min-width:80px;flex-shrink:0;}
+.p-val{font-size:13px;color:var(--text);flex:1;line-height:1.6;}
+.p-spot{margin-bottom:16px;}
+.p-spot-name{font-size:13px;font-weight:700;background:var(--green-light);color:var(--green);padding:6px 10px;border-radius:6px;margin-bottom:8px;}
+.p-photo-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.p-photo{aspect-ratio:4/3;border-radius:6px;overflow:hidden;border:1px solid var(--border);}
+.p-photo img{width:100%;height:100%;object-fit:cover;display:block;}
+.note-box{background:var(--bg);border-radius:8px;padding:12px;font-size:13px;line-height:1.7;color:var(--text);white-space:pre-wrap;}
+.print-note{font-size:12px;color:var(--sub);text-align:center;margin-bottom:12px;line-height:1.7;}
 </style>
 </head>
 <body>
-
 <div class="app-header">
   <h1>🏠 リフォーム作業報告書</h1>
   <div class="sub">現場でスマホ入力 → PDF送付</div>
 </div>
-
 <div class="tabs">
   <button class="tab active" onclick="gotoTab(0)" id="tab0">① 基本情報</button>
   <button class="tab" onclick="gotoTab(1)" id="tab1">② 作業箇所</button>
@@ -256,13 +90,12 @@ textarea { resize: vertical; min-height: 80px; line-height: 1.7; }
   <button class="tab" onclick="gotoTab(3)" id="tab3">④ 確認・PDF</button>
 </div>
 
-<!-- STEP 1 -->
 <div class="section active" id="sec0">
   <div class="card">
     <div class="card-title">物件情報</div>
     <div class="field">
       <label>事業者名</label>
-      <input type="text" id="biz_name" placeholder="例）アメニティ" value="アメニティ">
+      <input type="text" id="biz_name" value="アメニティ">
     </div>
     <div class="field">
       <label>物件名<span class="req">*</span></label>
@@ -280,30 +113,27 @@ textarea { resize: vertical; min-height: 80px; line-height: 1.7; }
     </div>
     <div class="field">
       <label>担当者名</label>
-      <input type="text" id="worker" placeholder="例）山田 太郎" value="大城">
+      <input type="text" id="worker" value="大城">
     </div>
   </div>
 </div>
 
-<!-- STEP 2 -->
 <div class="section" id="sec1">
   <div id="spots-container"></div>
   <button class="btn btn-add" onclick="addSpot()">＋ 作業箇所を追加</button>
 </div>
 
-<!-- STEP 3 -->
 <div class="section" id="sec2">
   <div class="card">
     <div class="card-title">特記事項・コメント</div>
     <div class="field">
-      <textarea id="notes" placeholder="例）エアコン下の染み跡は既存の汚れです。クローゼット内の小傷は入居前から確認済み。" rows="6"></textarea>
+      <textarea id="notes" placeholder="例）エアコン下の染み跡は既存の汚れです。" rows="6"></textarea>
     </div>
   </div>
 </div>
 
-<!-- STEP 4 -->
 <div class="section" id="sec3">
-  <div class="preview-wrap" id="preview-area">
+  <div class="preview-wrap">
     <div class="preview-head">
       <h2>リフォーム作業報告書</h2>
       <div class="pdate" id="p-created"></div>
@@ -331,7 +161,7 @@ textarea { resize: vertical; min-height: 80px; line-height: 1.7; }
   <button class="btn btn-pdf" onclick="doPrint()" id="btn-pdf-main">📄 PDFとして保存・印刷</button>
 </div>
 
-<div class="bottom-bar" id="bottom-bar">
+<div class="bottom-bar">
   <button class="btn btn-outline" onclick="prevTab()" id="btn-prev" style="display:none">← 戻る</button>
   <button class="btn btn-primary" onclick="nextTab()" id="btn-next">次へ →</button>
 </div>
@@ -357,10 +187,8 @@ function markDone(i) { document.getElementById('tab'+i).classList.add('done'); }
 function addSpot() {
   spotCount++;
   const id = 's' + Date.now();
-  const obj = { id, name: '', photos: [] };
-  spots.push(obj);
+  spots.push({ id, name: '', photos: [] });
   const sidx = spots.length - 1;
-
   const div = document.createElement('div');
   div.className = 'spot-item';
   div.id = 'item-'+id;
@@ -371,8 +199,7 @@ function addSpot() {
     </div>
     <div class="field">
       <label>部屋・箇所名</label>
-      <input type="text" placeholder="例）南西洋室、キッチン、トイレ"
-        oninput="spots[${sidx}].name=this.value; markDone(1)">
+      <input type="text" placeholder="例）南西洋室、キッチン、トイレ" oninput="spots[${sidx}].name=this.value; markDone(1)">
     </div>
     <div class="field">
       <label>After写真</label>
@@ -419,17 +246,14 @@ function renderPhotos(id, sidx) {
     wrap.dataset.sidx = sidx;
     wrap.dataset.pidx = pidx;
     wrap.dataset.id = id;
-    wrap.innerHTML = `
-      <img src="${photo.url}" style="pointer-events:none">
-      <button class="photo-thumb-del" onclick="removePhoto('${id}',${sidx},${pidx})">×</button>
-    `;
+    wrap.innerHTML = `<img src="${photo.url}" style="pointer-events:none"><button class="photo-thumb-del" onclick="removePhoto('${id}',${sidx},${pidx})">×</button>`;
     wrap.addEventListener('dragstart', onDragStart);
-    wrap.addEventListener('dragover',  onDragOver);
-    wrap.addEventListener('drop',      onDrop);
-    wrap.addEventListener('dragend',   onDragEnd);
+    wrap.addEventListener('dragover', onDragOver);
+    wrap.addEventListener('drop', onDrop);
+    wrap.addEventListener('dragend', onDragEnd);
     wrap.addEventListener('touchstart', onTouchStart, { passive: true });
-    wrap.addEventListener('touchmove',  onTouchMove,  { passive: false });
-    wrap.addEventListener('touchend',   onTouchEnd);
+    wrap.addEventListener('touchmove', onTouchMove, { passive: false });
+    wrap.addEventListener('touchend', onTouchEnd);
     grid.appendChild(wrap);
   });
 }
@@ -439,41 +263,34 @@ function removePhoto(id, sidx, pidx) {
   renderPhotos(id, sidx);
 }
 
-// ---- Drag & Drop (desktop) ----
 let dragSrc = null;
 function onDragStart(e) { dragSrc = this; this.classList.add('dragging'); }
-function onDragOver(e)  { e.preventDefault(); this.classList.add('drag-over'); }
-function onDragEnd()    { document.querySelectorAll('.photo-thumb').forEach(el => el.classList.remove('dragging','drag-over')); }
+function onDragOver(e) { e.preventDefault(); this.classList.add('drag-over'); }
+function onDragEnd() { document.querySelectorAll('.photo-thumb').forEach(el => el.classList.remove('dragging','drag-over')); }
 function onDrop(e) {
   e.preventDefault();
   if (dragSrc === this) return;
   const sidx = parseInt(this.dataset.sidx);
   const from = parseInt(dragSrc.dataset.pidx);
-  const to   = parseInt(this.dataset.pidx);
-  const id   = this.dataset.id;
+  const to = parseInt(this.dataset.pidx);
   const moved = spots[sidx].photos.splice(from, 1)[0];
   spots[sidx].photos.splice(to, 0, moved);
-  renderPhotos(id, sidx);
+  renderPhotos(this.dataset.id, sidx);
 }
 
-// ---- Touch drag (mobile) ----
 let touchDragEl = null, touchClone = null, touchSidx, touchId;
-function onTouchStart(e) {
-  touchDragEl = this;
-  touchSidx = parseInt(this.dataset.sidx);
-  touchId   = this.dataset.id;
-}
+function onTouchStart(e) { touchDragEl = this; touchSidx = parseInt(this.dataset.sidx); touchId = this.dataset.id; }
 function onTouchMove(e) {
   e.preventDefault();
   const t = e.touches[0];
   if (!touchClone) {
     touchClone = touchDragEl.cloneNode(true);
-    touchClone.style.cssText = `position:fixed;opacity:0.7;pointer-events:none;width:${touchDragEl.offsetWidth}px;height:${touchDragEl.offsetHeight}px;border-radius:7px;overflow:hidden;z-index:999;`;
+    touchClone.style.cssText = `position:fixed;opacity:.7;pointer-events:none;width:${touchDragEl.offsetWidth}px;height:${touchDragEl.offsetHeight}px;border-radius:7px;overflow:hidden;z-index:999;`;
     document.body.appendChild(touchClone);
     touchDragEl.classList.add('dragging');
   }
   touchClone.style.left = (t.clientX - touchDragEl.offsetWidth/2) + 'px';
-  touchClone.style.top  = (t.clientY - touchDragEl.offsetHeight/2) + 'px';
+  touchClone.style.top = (t.clientY - touchDragEl.offsetHeight/2) + 'px';
   document.querySelectorAll('.photo-thumb').forEach(el => el.classList.remove('drag-over'));
   const under = document.elementFromPoint(t.clientX, t.clientY);
   const target = under && under.closest('.photo-thumb');
@@ -488,7 +305,7 @@ function onTouchEnd(e) {
   document.querySelectorAll('.photo-thumb').forEach(el => el.classList.remove('drag-over'));
   if (target && target !== touchDragEl) {
     const from = parseInt(touchDragEl.dataset.pidx);
-    const to   = parseInt(target.dataset.pidx);
+    const to = parseInt(target.dataset.pidx);
     const moved = spots[touchSidx].photos.splice(from, 1)[0];
     spots[touchSidx].photos.splice(to, 0, moved);
     renderPhotos(touchId, touchSidx);
@@ -497,25 +314,20 @@ function onTouchEnd(e) {
 }
 
 function buildPreview() {
-  const biz  = document.getElementById('biz_name').value  || '—';
+  const biz = document.getElementById('biz_name').value || '—';
   const prop = document.getElementById('prop_name').value || '（未入力）';
-  const room = document.getElementById('room_num').value  || '—';
-  const wd   = document.getElementById('work_date').value;
-  const wkr  = document.getElementById('worker').value   || '—';
+  const room = document.getElementById('room_num').value || '—';
+  const wd = document.getElementById('work_date').value;
+  const wkr = document.getElementById('worker').value || '—';
   const note = document.getElementById('notes').value;
-
-  const dateStr = wd
-    ? new Date(wd+'T00:00:00').toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric'})
-    : '—';
+  const dateStr = wd ? new Date(wd+'T00:00:00').toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric'}) : '—';
   const today = new Date().toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric'});
-
   document.getElementById('p-created').textContent = '作成日：' + today;
-  document.getElementById('p-biz').textContent     = biz;
-  document.getElementById('p-prop').textContent    = prop;
-  document.getElementById('p-room').textContent    = room;
-  document.getElementById('p-date').textContent    = dateStr;
-  document.getElementById('p-worker').textContent  = wkr;
-
+  document.getElementById('p-biz').textContent = biz;
+  document.getElementById('p-prop').textContent = prop;
+  document.getElementById('p-room').textContent = room;
+  document.getElementById('p-date').textContent = dateStr;
+  document.getElementById('p-worker').textContent = wkr;
   const spotsEl = document.getElementById('p-spots');
   spotsEl.innerHTML = '';
   if (spots.length === 0) {
@@ -525,14 +337,11 @@ function buildPreview() {
       const photos = spot.photos.map(p => p.url);
       const div = document.createElement('div');
       div.className = 'p-spot';
-      // 写真を2枚ずつの行に分割（各行がページをまたがない）
       let photosHTML = '';
       if (photos.length > 0) {
         for (let i = 0; i < photos.length; i += 2) {
-          const group = photos.slice(i, i + 2);
-          photosHTML += '<div class="print-photo-page p-photo-grid">' +
-            group.map(url => `<div class="p-photo"><img src="${url}"></div>`).join('') +
-            '</div>';
+          const group = photos.slice(i, i+2);
+          photosHTML += '<div class="p-photo-grid">' + group.map(url => `<div class="p-photo"><img src="${url}"></div>`).join('') + '</div>';
         }
       } else {
         photosHTML = '<div style="font-size:12px;color:var(--sub);padding:4px 0">写真なし</div>';
@@ -541,7 +350,6 @@ function buildPreview() {
       spotsEl.appendChild(div);
     });
   }
-
   if (note.trim()) {
     document.getElementById('p-notes-wrap').style.display = '';
     document.getElementById('p-notes').textContent = note;
@@ -550,42 +358,28 @@ function buildPreview() {
   }
 }
 
-function isIOSChrome() {
-  const ua = navigator.userAgent;
-  return /iPhone|iPad|iPod/.test(ua) && /CriOS/.test(ua);
-}
-function isSafari() {
-  const ua = navigator.userAgent;
-  return /iPhone|iPad|iPod/.test(ua) && !/CriOS/.test(ua) && !/FxiOS/.test(ua);
-}
+function isIOSChrome() { return /iPhone|iPad|iPod/.test(navigator.userAgent) && /CriOS/.test(navigator.userAgent); }
 
 function showSaveGuide() {
   const guide = document.getElementById('save-guide');
   if (isIOSChrome()) {
-    guide.innerHTML = `
-      <div style="background:#FFF8EC;border:1.5px solid #E8C46A;border-radius:10px;padding:14px;margin-bottom:4px;">
-        <div style="font-size:13px;font-weight:700;color:#7A5000;margin-bottom:8px;">⚠️ iPhoneのChromeではPDF保存できません</div>
-        <div style="font-size:12px;color:#5A4000;line-height:1.7;">
-          <b>方法①（推奨）</b><br>
-          このファイルを <b>Safari</b> で開き直してください。<br>
-          Safari → 📄 PDFボタン → 「ファイルに保存」でPDFになります。<br><br>
-          <b>方法②</b><br>
-          このプレビュー画面を <b>スクリーンショット</b>（サイドボタン＋音量上）で保存して管理会社に送ることもできます。
-        </div>
-      </div>`;
-  } else if (isSafari()) {
-    guide.innerHTML = `<p class="print-note">「PDFとして保存」ボタン → 印刷ダイアログ →<br>左下のPDFアイコン → 「ファイルに保存」</p>`;
+    guide.innerHTML = `<div style="background:#FFF8EC;border:1.5px solid #E8C46A;border-radius:10px;padding:14px;">
+      <div style="font-size:13px;font-weight:700;color:#7A5000;margin-bottom:8px;">⚠️ iPhoneのChromeではPDF保存できません</div>
+      <div style="font-size:12px;color:#5A4000;line-height:1.7;"><b>Safariで開き直してください。</b><br>Safari → PDFボタン → 「ファイルに保存」</div>
+    </div>`;
   } else {
-    guide.innerHTML = `<p class="print-note">ボタンを押すと印刷ダイアログが開きます。<br>「PDFとして保存」を選択してください。</p>`;
+    guide.innerHTML = `<p class="print-note">ボタンを押すとPDFが自動ダウンロードされます。</p>`;
   }
 }
 
+// ---- PDF生成 ----
 async function doPrint() {
   showSaveGuide();
   if (isIOSChrome()) return;
+  if (typeof window.jspdf === 'undefined') { alert('ライブラリ読み込み中です。少し待ってから再度お試しください。'); return; }
 
   const btn = document.getElementById('btn-pdf-main');
-  btn.textContent = '⏳ 写真読み込み中...';
+  btn.textContent = '⏳ 写真準備中...';
   btn.disabled = true;
 
   const biz  = document.getElementById('biz_name').value  || '—';
@@ -594,246 +388,176 @@ async function doPrint() {
   const wd   = document.getElementById('work_date').value;
   const wkr  = document.getElementById('worker').value   || '—';
   const note = document.getElementById('notes').value;
-  const dateStr = wd
-    ? new Date(wd+'T00:00:00').toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric'})
-    : '—';
+  const dateStr = wd ? new Date(wd+'T00:00:00').toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric'}) : '—';
   const today = new Date().toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric'});
 
-  // ページデータ組み立て（全ページ6枚）
-  const PHOTOS_PER_PAGE = 6;
-  let pages = [];
-  let isVeryFirstPage = true;
+  // ページ組み立て（6枚/ページ）
+  const PER = 6;
+  const pdfPages = [];
+  let firstDone = false;
   spots.forEach(spot => {
     const photos = spot.photos.map(p => p.url);
     const name = spot.name || '（箇所名未入力）';
     let i = 0;
     do {
-      const g = photos.slice(i, i + PHOTOS_PER_PAGE);
-      while (g.length < PHOTOS_PER_PAGE) g.push(null);
-      pages.push({ type: isVeryFirstPage ? 'first' : 'photo', name, photos: g });
-      isVeryFirstPage = false;
-      i += PHOTOS_PER_PAGE;
+      const g = photos.slice(i, i+PER);
+      while (g.length < PER) g.push(null);
+      pdfPages.push({ type: firstDone ? 'photo' : 'first', name, photos: g });
+      firstDone = true;
+      i += PER;
     } while (i < photos.length);
   });
 
-  // 写真を1500px幅にリサイズしてBase64取得
-  function resizeImage(url, maxW) {
-    return new Promise((resolve) => {
-      if (!url) { resolve(null); return; }
-      const img = new Image();
-      const timer = setTimeout(() => resolve(null), 15000);
-      img.onload = () => {
-        clearTimeout(timer);
-        const scale = Math.min(1, maxW / img.width);
-        const w = Math.round(img.width * scale);
-        const h = Math.round(img.height * scale);
-        const canvas = document.createElement('canvas');
-        canvas.width = w; canvas.height = h;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, w, h);
-        resolve({ dataUrl: canvas.toDataURL('image/jpeg', 0.82), w, h });
-      };
-      img.onerror = () => { clearTimeout(timer); resolve(null); };
-      img.src = url;
-    });
-  }
+  // フォント待機
+  await document.fonts.ready;
+  try { await Promise.all([document.fonts.load("bold 14px 'Noto Sans JP'"), document.fonts.load("14px 'Noto Sans JP'")]); } catch(e) {}
 
-  // 全写真を事前リサイズ
-  const allUrls = pages.flatMap(p => p.photos).filter(Boolean);
-  const uniqueUrls = [...new Set(allUrls)];
+  // 写真リサイズ
+  const urlSet = [...new Set(pdfPages.flatMap(p => p.photos).filter(Boolean))];
   const resizeMap = new Map();
-  await Promise.all(uniqueUrls.map(async url => {
-    const result = await resizeImage(url, 1500);
-    if (result) resizeMap.set(url, result);
-  }));
+  await Promise.all(urlSet.map(url => new Promise(resolve => {
+    const img = new Image();
+    const t = setTimeout(() => resolve(), 15000);
+    img.onload = () => {
+      clearTimeout(t);
+      const maxW = 1500;
+      const scale = Math.min(1, maxW / img.width);
+      const w = Math.round(img.width * scale), h = Math.round(img.height * scale);
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      resizeMap.set(url, c.toDataURL('image/jpeg', 0.82));
+      resolve();
+    };
+    img.onerror = () => { clearTimeout(t); resolve(); };
+    img.src = url;
+  })));
 
   btn.textContent = '⏳ PDF生成中...';
 
-  // jsPDF (mm単位, A4)
-  const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
-
-  // A4サイズ: 210mm x 297mm
-  const PW = 210, PH = 297;
-  const PAD = 8;
-  const CW = PW - PAD * 2;
-
-  // 1mmあたりのpx換算 (96dpi: 1mm = 3.7795px)
   const MM2PX = 3.7795;
+  function mm2px(mm) { return Math.round(mm * MM2PX); }
 
-  // テキスト付きヘッダーをCanvasで描画してPDFに貼り込む（日本語文字化け回避）
-  function mmToPx(mm) { return Math.round(mm * MM2PX); }
-
-  async function drawHeaderCanvas(biz, prop, room, dateStr, wkr, today, note, spotName, cwMm, font) {
-    const W = mmToPx(cwMm);
+  // Canvasでヘッダー描画（日本語フォント使用）
+  function makeHeaderCanvas(cwMm) {
+    const W = mm2px(cwMm);
+    const rowH = 26, headerH = 44, labelH = 24;
+    let totalH = headerH + rowH * 5 + 6 + labelH;
+    if (note.trim()) totalH += labelH + 32 + 4;
     const canvas = document.createElement('canvas');
-    canvas.width = W;
-    // 高さを計算
-    let h = 0;
-    const headerH = 40, rowH = 24, labelH = 22;
-    h += headerH; // タイトルバー
-    h += rowH * 5; // 物件情報5行
-    h += 6; // マージン
-    if (note.trim()) h += labelH + 30 + 6;
-    h += labelH; // 場所ラベル
-    canvas.height = h;
+    canvas.width = W; canvas.height = totalH;
     const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, W, h);
-
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, totalH);
     let y = 0;
     // タイトルバー
-    ctx.fillStyle = '#2D5A3D';
-    ctx.fillRect(0, y, W, headerH);
-    ctx.fillStyle = '#ffffff';
-    ctx.font = `bold ${font * 1.6}px 'Noto Sans JP', sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.fillText('リフォーム作業報告書', W/2, y + headerH*0.58);
-    ctx.font = `${font * 0.9}px 'Noto Sans JP', sans-serif`;
+    ctx.fillStyle = '#2D5A3D'; ctx.fillRect(0, y, W, headerH);
+    ctx.fillStyle = '#ffffff'; ctx.textAlign = 'center';
+    ctx.font = "bold 18px 'Noto Sans JP', sans-serif";
+    ctx.fillText('リフォーム作業報告書', W/2, y+26);
+    ctx.font = "12px 'Noto Sans JP', sans-serif";
     ctx.fillStyle = 'rgba(255,255,255,0.8)';
-    ctx.fillText('作成日：' + today, W/2, y + headerH*0.88);
+    ctx.fillText('作成日：' + today, W/2, y+40);
     y += headerH;
-
     // 物件情報
-    const rows = [['事業者名', biz],['物件名', prop],['部屋番号', room],['作業日', dateStr],['担当者', wkr]];
+    const rows = [['事業者名',biz],['物件名',prop],['部屋番号',room],['作業日',dateStr],['担当者',wkr]];
     rows.forEach((row, ri) => {
-      const ry = y + ri * rowH;
-      ctx.fillStyle = ri % 2 === 0 ? '#F4F2ED' : '#FAFAF8';
-      ctx.fillRect(0, ry, W, rowH);
-      ctx.fillStyle = '#D6D3CB';
-      ctx.fillRect(0, ry + rowH - 1, W, 1);
-      ctx.fillStyle = '#6A6A65';
-      ctx.font = `bold ${font * 0.85}px 'Noto Sans JP', sans-serif`;
-      ctx.textAlign = 'left';
-      ctx.fillText(row[0], 10, ry + rowH * 0.68);
+      ctx.fillStyle = ri%2===0 ? '#F4F2ED' : '#FAFAF8'; ctx.fillRect(0, y, W, rowH);
+      ctx.fillStyle = '#D6D3CB'; ctx.fillRect(0, y+rowH-1, W, 1);
+      ctx.fillStyle = '#6A6A65'; ctx.textAlign = 'left';
+      ctx.font = "bold 12px 'Noto Sans JP', sans-serif";
+      ctx.fillText(row[0], 10, y+rowH*0.68);
       ctx.fillStyle = '#1C1C1A';
-      ctx.font = `${font}px 'Noto Sans JP', sans-serif`;
-      ctx.fillText(row[1], W * 0.28, ry + rowH * 0.68);
+      ctx.font = "13px 'Noto Sans JP', sans-serif";
+      ctx.fillText(row[1], W*0.27, y+rowH*0.68);
+      y += rowH;
     });
-    y += rowH * 5 + 6;
-
+    y += 6;
     // 特記事項
     if (note.trim()) {
-      ctx.fillStyle = '#EAF0EC';
-      ctx.fillRect(0, y, W, labelH);
-      ctx.fillStyle = '#2D5A3D';
-      ctx.font = `bold ${font * 0.85}px 'Noto Sans JP', sans-serif`;
-      ctx.textAlign = 'left';
-      ctx.fillText('特記事項', 10, y + labelH * 0.72);
+      ctx.fillStyle = '#EAF0EC'; ctx.fillRect(0, y, W, labelH);
+      ctx.fillStyle = '#2D5A3D'; ctx.textAlign = 'left';
+      ctx.font = "bold 12px 'Noto Sans JP', sans-serif";
+      ctx.fillText('特記事項', 10, y+labelH*0.72);
       y += labelH;
-      ctx.fillStyle = '#F4F2ED';
-      ctx.fillRect(0, y, W, 30);
+      ctx.fillStyle = '#F4F2ED'; ctx.fillRect(0, y, W, 32);
       ctx.fillStyle = '#1C1C1A';
-      ctx.font = `${font * 0.82}px 'Noto Sans JP', sans-serif`;
-      ctx.fillText(note.replace(/\n/g,' ').substring(0, 70), 10, y + 20);
+      ctx.font = "12px 'Noto Sans JP', sans-serif";
+      ctx.fillText(note.replace(/\n/g,' ').substring(0,65), 10, y+22);
       y += 36;
     }
-
     // 場所ラベル
-    ctx.fillStyle = '#EAF0EC';
-    ctx.fillRect(0, y, W, labelH);
-    ctx.fillStyle = '#2D5A3D';
-    ctx.font = `bold ${font}px 'Noto Sans JP', sans-serif`;
-    ctx.textAlign = 'left';
-    ctx.fillText('📍 ' + spotName, 10, y + labelH * 0.72);
-
-    return { dataUrl: canvas.toDataURL('image/png'), heightMm: h / MM2PX };
+    ctx.fillStyle = '#EAF0EC'; ctx.fillRect(0, y, W, labelH);
+    ctx.fillStyle = '#2D5A3D'; ctx.textAlign = 'left';
+    ctx.font = "bold 13px 'Noto Sans JP', sans-serif";
+    ctx.fillText('📍 ' + pdfPages[0].name, 10, y+labelH*0.72);
+    return { dataUrl: canvas.toDataURL('image/png'), heightMm: totalH / MM2PX };
   }
 
-  async function drawSpotLabelCanvas(spotName, cwMm, font) {
-    const W = mmToPx(cwMm);
-    const labelH = 22;
+  function makeLabelCanvas(name, cwMm) {
+    const W = mm2px(cwMm), labelH = 24;
     const canvas = document.createElement('canvas');
     canvas.width = W; canvas.height = labelH;
     const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#EAF0EC';
-    ctx.fillRect(0, 0, W, labelH);
-    ctx.fillStyle = '#2D5A3D';
-    ctx.font = `bold ${font}px 'Noto Sans JP', sans-serif`;
-    ctx.textAlign = 'left';
-    ctx.fillText('📍 ' + spotName, 10, labelH * 0.72);
+    ctx.fillStyle = '#EAF0EC'; ctx.fillRect(0, 0, W, labelH);
+    ctx.fillStyle = '#2D5A3D'; ctx.textAlign = 'left';
+    ctx.font = "bold 13px 'Noto Sans JP', sans-serif";
+    ctx.fillText('📍 ' + name, 10, labelH*0.72);
     return { dataUrl: canvas.toDataURL('image/png'), heightMm: labelH / MM2PX };
   }
 
-  const FONT_SIZE = 14; // px
+  function makeNoImageCanvas(wMm, hMm) {
+    const W = mm2px(wMm), H = mm2px(hMm);
+    const canvas = document.createElement('canvas');
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#F4F2ED'; ctx.fillRect(0,0,W,H);
+    ctx.strokeStyle = '#D6D3CB'; ctx.lineWidth = 1; ctx.strokeRect(0,0,W,H);
+    ctx.fillStyle = '#B0AEA8'; ctx.textAlign = 'center';
+    ctx.font = '13px sans-serif';
+    ctx.fillText('No Image', W/2, H/2+5);
+    return canvas.toDataURL('image/png');
+  }
 
-  // 日本語フォントをCanvasで使える状態にする
-  await document.fonts.ready;
-  // フォントが確実にロードされるよう一度描画テスト
-  const testCanvas = document.createElement('canvas');
-  testCanvas.width = 100; testCanvas.height = 30;
-  const testCtx = testCanvas.getContext('2d');
-  testCtx.font = "bold 14px 'Noto Sans JP', sans-serif";
-  testCtx.fillText('テスト', 10, 20);
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ unit:'mm', format:'a4', orientation:'portrait' });
+  const PW = 210, PH = 297, PAD = 8, CW = PW - PAD*2;
 
-  // フォント読み込みを明示的に待つ
-  try {
-    await Promise.all([
-      document.fonts.load("bold 14px 'Noto Sans JP'"),
-      document.fonts.load("14px 'Noto Sans JP'")
-    ]);
-  } catch(e) {}
-
-  for (let pi = 0; pi < pages.length; pi++) {
-    const page = pages[pi];
+  for (let pi = 0; pi < pdfPages.length; pi++) {
+    const page = pdfPages[pi];
     if (pi > 0) pdf.addPage();
-
     let y = PAD;
 
-    // ヘッダー or 場所ラベルをCanvasで描画
-    if (page.type === 'first') {
-      const header = await drawHeaderCanvas(biz, prop, room, dateStr, wkr, today, note, page.name, CW, FONT_SIZE);
-      pdf.addImage(header.dataUrl, 'PNG', PAD, y, CW, header.heightMm);
-      y += header.heightMm + 2;
+    if (pi === 0) {
+      const h = makeHeaderCanvas(CW);
+      pdf.addImage(h.dataUrl, 'PNG', PAD, y, CW, h.heightMm);
+      y += h.heightMm + 2;
     } else {
-      const label = await drawSpotLabelCanvas(page.name, CW, FONT_SIZE);
-      pdf.addImage(label.dataUrl, 'PNG', PAD, y, CW, label.heightMm);
-      y += label.heightMm + 2;
+      const lbl = makeLabelCanvas(page.name, CW);
+      pdf.addImage(lbl.dataUrl, 'PNG', PAD, y, CW, lbl.heightMm);
+      y += lbl.heightMm + 2;
     }
 
-    // 写真グリッド（2列×3行）
     const cols = 2, rows2 = 3, gap = 2;
     const cellW = (CW - gap) / cols;
     const availH = PH - y - PAD;
-    const cellH = Math.min((availH - gap * (rows2-1)) / rows2, 70);
+    const cellH = Math.min((availH - gap*(rows2-1)) / rows2, 72);
 
-    for (let idx = 0; idx < page.photos.length; idx++) {
-      const url = page.photos[idx];
+    page.photos.forEach((url, idx) => {
       const col = idx % cols;
       const row = Math.floor(idx / cols);
-      const cx = PAD + col * (cellW + gap);
-      const cy = y + row * (cellH + gap);
-
-      pdf.setDrawColor(214,211,203); pdf.setLineWidth(0.2); pdf.rect(cx, cy, cellW, cellH, 'S');
-
-      if (url) {
-        try {
-          const resized = resizeMap.get(url);
-          if (resized) {
-            pdf.addImage(resized.dataUrl, 'JPEG', cx, cy, cellW, cellH, '', 'FAST');
-          } else {
-            pdf.setFillColor(244,242,237); pdf.rect(cx, cy, cellW, cellH, 'F');
-          }
-        } catch(e) {
-          pdf.setFillColor(244,242,237); pdf.rect(cx, cy, cellW, cellH, 'F');
-        }
+      const cx = PAD + col*(cellW+gap);
+      const cy = y + row*(cellH+gap);
+      if (url && resizeMap.has(url)) {
+        try { pdf.addImage(resizeMap.get(url), 'JPEG', cx, cy, cellW, cellH, '', 'FAST'); }
+        catch(e) { pdf.addImage(makeNoImageCanvas(cellW, cellH), 'PNG', cx, cy, cellW, cellH); }
       } else {
-        // No Imageをcanvasで描画
-        const nc = document.createElement('canvas');
-        nc.width = mmToPx(cellW); nc.height = mmToPx(cellH);
-        const nctx = nc.getContext('2d');
-        nctx.fillStyle = '#F4F2ED'; nctx.fillRect(0,0,nc.width,nc.height);
-        nctx.strokeStyle = '#D6D3CB'; nctx.lineWidth = 1; nctx.strokeRect(0,0,nc.width,nc.height);
-        nctx.fillStyle = '#B0AEA8'; nctx.font = '14px sans-serif'; nctx.textAlign = 'center';
-        nctx.fillText('No Image', nc.width/2, nc.height/2 + 5);
-        pdf.addImage(nc.toDataURL('image/png'), 'PNG', cx, cy, cellW, cellH);
+        pdf.addImage(makeNoImageCanvas(cellW, cellH), 'PNG', cx, cy, cellW, cellH);
       }
-    }
+    });
   }
 
   const filename = (prop !== '（未入力）' ? prop : '報告書') + '_' + (room !== '—' ? room : '') + '.pdf';
   pdf.save(filename);
-
   btn.textContent = '📄 PDFとして保存・印刷';
   btn.disabled = false;
 }
