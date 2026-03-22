@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>リフォーム報告書</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  --green: #2D5A3D;
+  --green-light: #EAF0EC;
+  --gold: #B8832A;
+  --bg: #F4F2ED;
+  --white: #FFFFFF;
+  --text: #1C1C1A;
+  --sub: #6A6A65;
+  --border: #D6D3CB;
+  --danger: #B03030;
+  --radius: 12px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body {
+  font-family: 'Noto Sans JP', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding-bottom: 90px;
+}
+.app-header {
+  background: var(--green);
+  color: white;
+  padding: 16px 18px 12px;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+}
+.app-header h1 { font-size: 16px; font-weight: 700; letter-spacing: 0.05em; }
+.app-header .sub { font-family: 'DM Mono', monospace; font-size: 11px; opacity: 0.65; margin-top: 2px; }
+
+.tabs {
+  display: flex;
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tab {
+  flex: 1; min-width: 78px;
+  padding: 11px 6px;
+  font-size: 12px; font-weight: 500;
+  font-family: 'Noto Sans JP', sans-serif;
+  text-align: center;
+  cursor: pointer;
+  border: none; background: none;
+  color: var(--sub);
+  border-bottom: 2.5px solid transparent;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.tab.active { color: var(--green); border-bottom-color: var(--green); font-weight: 700; }
+.tab.done { color: var(--green); }
+.tab.done::after { content: ' ✓'; font-size: 10px; }
+
+.section { display: none; padding: 16px; animation: fadeUp 0.2s ease; }
+.section.active { display: block; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.card {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+}
+.card-title {
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 0.1em; color: var(--green);
+  text-transform: uppercase;
+  margin-bottom: 14px; padding-bottom: 8px;
+  border-bottom: 1.5px solid var(--green-light);
+}
+
+.field { margin-bottom: 14px; }
+.field:last-child { margin-bottom: 0; }
+.field label { display: block; font-size: 12px; font-weight: 700; color: var(--sub); margin-bottom: 6px; letter-spacing: 0.03em; }
+.field label .req { color: var(--danger); margin-left: 2px; }
+input[type=text], input[type=date], textarea {
+  width: 100%; padding: 11px 13px;
+  border: 1.5px solid var(--border); border-radius: 8px;
+  font-size: 15px; font-family: 'Noto Sans JP', sans-serif;
+  color: var(--text); background: #FAFAF7;
+  transition: border-color 0.2s; outline: none;
+  -webkit-appearance: none;
+}
+input:focus, textarea:focus { border-color: var(--green); background: var(--white); }
+textarea { resize: vertical; min-height: 80px; line-height: 1.7; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.btn {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  width: 100%; padding: 13px 18px;
+  border: none; border-radius: 9px;
+  font-size: 14px; font-weight: 700;
+  font-family: 'Noto Sans JP', sans-serif;
+  cursor: pointer; transition: all 0.15s; letter-spacing: 0.03em;
+}
+.btn:active { transform: scale(0.97); }
+.btn-primary { background: var(--green); color: white; }
+.btn-outline { background: transparent; border: 1.5px solid var(--green); color: var(--green); }
+.btn-add { background: var(--green-light); color: var(--green); border: 1.5px dashed var(--green); }
+.btn-pdf { background: var(--gold); color: white; font-size: 16px; padding: 16px; }
+
+.bottom-bar {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--white); border-top: 1px solid var(--border);
+  padding: 10px 16px; display: flex; gap: 10px; z-index: 200;
+}
+.bottom-bar .btn { flex: 1; }
+
+.spot-item {
+  border: 1.5px solid var(--border); border-radius: 10px;
+  padding: 14px; margin-bottom: 12px;
+  background: var(--white);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+.spot-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.spot-num {
+  font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500;
+  background: var(--green-light); color: var(--green); padding: 3px 9px; border-radius: 4px;
+}
+.btn-del { background: none; border: none; color: var(--danger); font-size: 22px; cursor: pointer; padding: 0 4px; line-height: 1; }
+
+.photo-zone {
+  border: 2px dashed var(--border); border-radius: 9px;
+  padding: 22px 16px; text-align: center; cursor: pointer;
+  background: #FAFAF7; transition: all 0.2s; margin-top: 10px; display: block;
+}
+.photo-zone:active { border-color: var(--green); background: var(--green-light); }
+.photo-zone input { display: none; }
+.photo-icon { font-size: 30px; }
+.photo-hint { font-size: 12px; color: var(--sub); margin-top: 6px; line-height: 1.5; }
+
+.photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.photo-thumb {
+  position: relative; aspect-ratio: 4/3;
+  border-radius: 7px; overflow: hidden; border: 1px solid var(--border);
+}
+.photo-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.photo-thumb-label {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: rgba(0,0,0,0.55); color: white;
+  font-size: 10px; padding: 4px 7px; font-weight: 500;
+}
+.photo-thumb-del {
+  position: absolute; top: 4px; right: 4px;
+  background: rgba(0,0,0,0.6); color: white;
+  border: none; border-radius: 50%; width: 22px; height: 22px;
+  font-size: 13px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* Preview */
+.preview-wrap { background: var(--white); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; margin-bottom: 14px; }
+.preview-head { background: var(--green); color: white; padding: 20px; text-align: center; }
+.preview-head h2 { font-size: 18px; font-weight: 700; letter-spacing: 0.06em; }
+.preview-head .pdate { font-family: 'DM Mono', monospace; font-size: 11px; opacity: 0.75; margin-top: 5px; }
+.preview-body { padding: 16px; }
+.p-section { margin-bottom: 18px; }
+.p-section-title {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.1em; color: var(--green);
+  text-transform: uppercase; padding-bottom: 6px;
+  border-bottom: 1.5px solid var(--green-light); margin-bottom: 10px;
+}
+.p-row { display: flex; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--bg); }
+.p-row:last-child { border-bottom: none; }
+.p-key { font-size: 12px; font-weight: 700; color: var(--sub); min-width: 80px; flex-shrink: 0; }
+.p-val { font-size: 13px; color: var(--text); flex: 1; line-height: 1.6; }
+.p-spot { margin-bottom: 16px; }
+.p-spot-name { font-size: 13px; font-weight: 700; background: var(--green-light); color: var(--green); padding: 6px 10px; border-radius: 6px; margin-bottom: 8px; }
+.p-photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.p-photo { aspect-ratio: 4/3; border-radius: 6px; overflow: hidden; border: 1px solid var(--border); position: relative; }
+.p-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.p-photo-label { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.5); color: white; font-size: 10px; padding: 3px 6px; }
+.note-box { background: var(--bg); border-radius: 8px; padding: 12px; font-size: 13px; line-height: 1.7; color: var(--text); white-space: pre-wrap; }
+.print-note { font-size: 12px; color: var(--sub); text-align: center; margin-bottom: 12px; line-height: 1.7; }
+
+@media print {
+  body { background: white; padding: 0; }
+  .app-header, .tabs, .bottom-bar { display: none !important; }
+  .section { display: none !important; }
+  .section.active { display: block !important; padding: 0; }
+  .preview-wrap { border: none; }
+  .btn-pdf, .print-note { display: none !important; }
+  @page { margin: 12mm; }
+}
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <h1>🏠 リフォーム作業報告書</h1>
+  <div class="sub">現場でスマホ入力 → PDF送付</div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="gotoTab(0)" id="tab0">① 基本情報</button>
+  <button class="tab" onclick="gotoTab(1)" id="tab1">② 作業箇所</button>
+  <button class="tab" onclick="gotoTab(2)" id="tab2">③ 特記事項</button>
+  <button class="tab" onclick="gotoTab(3)" id="tab3">④ 確認・PDF</button>
+</div>
+
+<!-- STEP 1 -->
+<div class="section active" id="sec0">
+  <div class="card">
+    <div class="card-title">物件情報</div>
+    <div class="field">
+      <label>事業者名</label>
+      <input type="text" id="biz_name" placeholder="例）アメニティ" value="アメニティ">
+    </div>
+    <div class="field">
+      <label>物件名<span class="req">*</span></label>
+      <input type="text" id="prop_name" placeholder="例）ライオンズマンション渋谷" oninput="markDone(0)">
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>部屋番号</label>
+        <input type="text" id="room_num" placeholder="例）305号室">
+      </div>
+      <div class="field">
+        <label>作業日<span class="req">*</span></label>
+        <input type="date" id="work_date" oninput="markDone(0)">
+      </div>
+    </div>
+    <div class="field">
+      <label>担当者名</label>
+      <input type="text" id="worker" placeholder="例）山田 太郎" value="大城">
+    </div>
+  </div>
+</div>
+
+<!-- STEP 2 -->
+<div class="section" id="sec1">
+  <div id="spots-container"></div>
+  <button class="btn btn-add" onclick="addSpot()">＋ 作業箇所を追加</button>
+</div>
+
+<!-- STEP 3 -->
+<div class="section" id="sec2">
+  <div class="card">
+    <div class="card-title">特記事項・コメント</div>
+    <div class="field">
+      <textarea id="notes" placeholder="例）エアコン下の染み跡は既存の汚れです。クローゼット内の小傷は入居前から確認済み。" rows="6"></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 4 -->
+<div class="section" id="sec3">
+  <div class="preview-wrap" id="preview-area">
+    <div class="preview-head">
+      <h2>リフォーム作業報告書</h2>
+      <div class="pdate" id="p-created"></div>
+    </div>
+    <div class="preview-body">
+      <div class="p-section">
+        <div class="p-section-title">物件情報</div>
+        <div class="p-row"><div class="p-key">事業者名</div><div class="p-val" id="p-biz"></div></div>
+        <div class="p-row"><div class="p-key">物件名</div><div class="p-val" id="p-prop"></div></div>
+        <div class="p-row"><div class="p-key">部屋番号</div><div class="p-val" id="p-room"></div></div>
+        <div class="p-row"><div class="p-key">作業日</div><div class="p-val" id="p-date"></div></div>
+        <div class="p-row"><div class="p-key">担当者</div><div class="p-val" id="p-worker"></div></div>
+      </div>
+      <div class="p-section">
+        <div class="p-section-title">作業箇所（After写真）</div>
+        <div id="p-spots"></div>
+      </div>
+      <div class="p-section" id="p-notes-wrap" style="display:none">
+        <div class="p-section-title">特記事項</div>
+        <div class="note-box" id="p-notes"></div>
+      </div>
+    </div>
+  </div>
+  <div id="save-guide" style="margin-bottom:14px;"></div>
+  <button class="btn btn-pdf" onclick="doPrint()" id="btn-pdf-main">📄 PDFとして保存・印刷</button>
+</div>
+
+<div class="bottom-bar" id="bottom-bar">
+  <button class="btn btn-outline" onclick="prevTab()" id="btn-prev" style="display:none">← 戻る</button>
+  <button class="btn btn-primary" onclick="nextTab()" id="btn-next">次へ →</button>
+</div>
+
+<script>
+let currentTab = 0;
+let spotCount = 0;
+const spots = [];
+
+function gotoTab(i) {
+  if (i === 3) { buildPreview(); showSaveGuide(); }
+  document.querySelectorAll('.section').forEach((s,j) => s.classList.toggle('active', j===i));
+  document.querySelectorAll('.tab').forEach((t,j) => t.classList.toggle('active', j===i));
+  currentTab = i;
+  document.getElementById('btn-prev').style.display = i===0 ? 'none' : '';
+  document.getElementById('btn-next').style.display = i===3 ? 'none' : '';
+  window.scrollTo(0,0);
+}
+function nextTab() { if (currentTab < 3) gotoTab(currentTab+1); }
+function prevTab() { if (currentTab > 0) gotoTab(currentTab-1); }
+function markDone(i) { document.getElementById('tab'+i).classList.add('done'); }
+
+function addSpot() {
+  spotCount++;
+  const id = 's' + Date.now();
+  const obj = { id, name: '', photos: [] };
+  spots.push(obj);
+  const sidx = spots.length - 1;
+
+  const div = document.createElement('div');
+  div.className = 'spot-item';
+  div.id = 'item-'+id;
+  div.innerHTML = `
+    <div class="spot-header">
+      <span class="spot-num">箇所 ${spotCount}</span>
+      <button class="btn-del" onclick="removeSpot('${id}')">×</button>
+    </div>
+    <div class="field">
+      <label>部屋・箇所名</label>
+      <input type="text" placeholder="例）南西洋室、キッチン、トイレ"
+        oninput="spots[${sidx}].name=this.value; markDone(1)">
+    </div>
+    <div class="field">
+      <label>After写真</label>
+      <label class="photo-zone" for="file-${id}">
+        <input type="file" id="file-${id}" accept="image/*" multiple onchange="addPhotos(event,'${id}',${sidx})">
+        <div class="photo-icon">📷</div>
+        <div class="photo-hint">タップして写真を選択<br>複数枚同時OK</div>
+      </label>
+      <div class="photo-grid" id="pg-${id}"></div>
+    </div>
+  `;
+  document.getElementById('spots-container').appendChild(div);
+  markDone(1);
+}
+
+function removeSpot(id) {
+  const i = spots.findIndex(s => s.id === id);
+  if (i !== -1) spots.splice(i, 1);
+  const el = document.getElementById('item-'+id);
+  if (el) el.remove();
+}
+
+function addPhotos(event, id, sidx) {
+  const files = Array.from(event.target.files);
+  const grid = document.getElementById('pg-'+id);
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const url = e.target.result;
+      const pidx = spots[sidx].photos.length;
+      spots[sidx].photos.push({ url, active: true });
+      const wrap = document.createElement('div');
+      wrap.className = 'photo-thumb';
+      wrap.id = `ph-${id}-${pidx}`;
+      wrap.innerHTML = `
+        <img src="${url}">
+        <div class="photo-thumb-label">After</div>
+        <button class="photo-thumb-del" onclick="removePhoto('${id}',${sidx},${pidx})">×</button>
+      `;
+      grid.appendChild(wrap);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function removePhoto(id, sidx, pidx) {
+  spots[sidx].photos[pidx].active = false;
+  const el = document.getElementById(`ph-${id}-${pidx}`);
+  if (el) el.remove();
+}
+
+function buildPreview() {
+  const biz  = document.getElementById('biz_name').value  || '—';
+  const prop = document.getElementById('prop_name').value || '（未入力）';
+  const room = document.getElementById('room_num').value  || '—';
+  const wd   = document.getElementById('work_date').value;
+  const wkr  = document.getElementById('worker').value   || '—';
+  const note = document.getElementById('notes').value;
+
+  const dateStr = wd
+    ? new Date(wd+'T00:00:00').toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric'})
+    : '—';
+  const today = new Date().toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric'});
+
+  document.getElementById('p-created').textContent = '作成日：' + today;
+  document.getElementById('p-biz').textContent     = biz;
+  document.getElementById('p-prop').textContent    = prop;
+  document.getElementById('p-room').textContent    = room;
+  document.getElementById('p-date').textContent    = dateStr;
+  document.getElementById('p-worker').textContent  = wkr;
+
+  const spotsEl = document.getElementById('p-spots');
+  spotsEl.innerHTML = '';
+  if (spots.length === 0) {
+    spotsEl.innerHTML = '<div style="font-size:13px;color:var(--sub);">作業箇所が登録されていません</div>';
+  } else {
+    spots.forEach(spot => {
+      const photos = spot.photos.filter(p => p.active);
+      const div = document.createElement('div');
+      div.className = 'p-spot';
+      const photosHTML = photos.length > 0
+        ? '<div class="p-photo-grid">' + photos.map(p =>
+            `<div class="p-photo"><img src="${p.url}"><div class="p-photo-label">After</div></div>`
+          ).join('') + '</div>'
+        : '<div style="font-size:12px;color:var(--sub);padding:4px 0">写真なし</div>';
+      div.innerHTML = `<div class="p-spot-name">📍 ${spot.name || '（箇所名未入力）'}</div>${photosHTML}`;
+      spotsEl.appendChild(div);
+    });
+  }
+
+  if (note.trim()) {
+    document.getElementById('p-notes-wrap').style.display = '';
+    document.getElementById('p-notes').textContent = note;
+  } else {
+    document.getElementById('p-notes-wrap').style.display = 'none';
+  }
+}
+
+function isIOSChrome() {
+  const ua = navigator.userAgent;
+  return /iPhone|iPad|iPod/.test(ua) && /CriOS/.test(ua);
+}
+function isSafari() {
+  const ua = navigator.userAgent;
+  return /iPhone|iPad|iPod/.test(ua) && !/CriOS/.test(ua) && !/FxiOS/.test(ua);
+}
+
+function showSaveGuide() {
+  const guide = document.getElementById('save-guide');
+  if (isIOSChrome()) {
+    guide.innerHTML = `
+      <div style="background:#FFF8EC;border:1.5px solid #E8C46A;border-radius:10px;padding:14px;margin-bottom:4px;">
+        <div style="font-size:13px;font-weight:700;color:#7A5000;margin-bottom:8px;">⚠️ iPhoneのChromeではPDF保存できません</div>
+        <div style="font-size:12px;color:#5A4000;line-height:1.7;">
+          <b>方法①（推奨）</b><br>
+          このファイルを <b>Safari</b> で開き直してください。<br>
+          Safari → 📄 PDFボタン → 「ファイルに保存」でPDFになります。<br><br>
+          <b>方法②</b><br>
+          このプレビュー画面を <b>スクリーンショット</b>（サイドボタン＋音量上）で保存して管理会社に送ることもできます。
+        </div>
+      </div>`;
+  } else if (isSafari()) {
+    guide.innerHTML = `<p class="print-note">「PDFとして保存」ボタン → 印刷ダイアログ →<br>左下のPDFアイコン → 「ファイルに保存」</p>`;
+  } else {
+    guide.innerHTML = `<p class="print-note">ボタンを押すと印刷ダイアログが開きます。<br>「PDFとして保存」を選択してください。</p>`;
+  }
+}
+
+function doPrint() {
+  buildPreview();
+  showSaveGuide();
+  if (isIOSChrome()) return; // Chromeでは印刷ダイアログを出さない
+  setTimeout(() => window.print(), 150);
+}
+
+// Init
+document.getElementById('work_date').value = new Date().toISOString().split('T')[0];
+addSpot();
+</script>
+</body>
+</html>
