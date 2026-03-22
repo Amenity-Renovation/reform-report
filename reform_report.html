@@ -203,13 +203,36 @@ textarea { resize: vertical; min-height: 80px; line-height: 1.7; }
   .app-header, .tabs, .bottom-bar { display: none !important; }
   .section { display: none !important; }
   .section.active { display: block !important; padding: 0; }
-  .preview-wrap { border: none; }
-  .btn-pdf, .print-note { display: none !important; }
-  .p-photo, .p-photo img { page-break-inside: avoid; break-inside: avoid; }
-  .p-photo-grid { page-break-inside: avoid; break-inside: avoid; }
-  .p-spot { page-break-inside: avoid; break-inside: avoid; }
+  .preview-wrap { border: none; box-shadow: none; }
+  .btn-pdf, .print-note, #save-guide { display: none !important; }
+  .preview-body { padding: 8px; }
+  .p-section { margin-bottom: 10px; }
+  .p-spot { page-break-inside: avoid; break-inside: avoid; margin-bottom: 12px; }
   .p-spot-name { page-break-after: avoid; break-after: avoid; }
-  @page { margin: 12mm; }
+  .p-photo-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: repeat(4, 1fr);
+    gap: 4px;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  .p-photo {
+    width: 100%;
+    height: 90px;
+    aspect-ratio: unset;
+    overflow: hidden;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    border-radius: 4px;
+  }
+  .p-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  @page { margin: 10mm; size: A4; }
 }
 </style>
 </head>
@@ -505,11 +528,18 @@ function buildPreview() {
       const photos = spot.photos.filter(p => p.active);
       const div = document.createElement('div');
       div.className = 'p-spot';
-      const photosHTML = photos.length > 0
-        ? '<div class="p-photo-grid">' + photos.map(p =>
-            `<div class="p-photo"><img src="${p.url}"></div>`
-          ).join('') + '</div>'
-        : '<div style="font-size:12px;color:var(--sub);padding:4px 0">写真なし</div>';
+      // 写真を4枚ずつのグループに分割
+      let photosHTML = '';
+      if (photos.length > 0) {
+        for (let i = 0; i < photos.length; i += 8) {
+          const group = photos.slice(i, i + 8);
+          photosHTML += '<div class="p-photo-grid" style="margin-bottom:4px;">' +
+            group.map(p => `<div class="p-photo"><img src="${p.url}"></div>`).join('') +
+            '</div>';
+        }
+      } else {
+        photosHTML = '<div style="font-size:12px;color:var(--sub);padding:4px 0">写真なし</div>';
+      }
       div.innerHTML = `<div class="p-spot-name">📍 ${spot.name || '（箇所名未入力）'}</div>${photosHTML}`;
       spotsEl.appendChild(div);
     });
