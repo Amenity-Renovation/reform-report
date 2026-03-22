@@ -611,25 +611,41 @@ function doPrint() {
   }
 
   // ページを組み立てる
+  // 1ページ目：物件情報 + 最初の場所の写真4枚
+  // 場所が変わったら必ず新ページ（8枚）
   let pages = [];
-  let isFirstPhotoPage = true;
+  let isVeryFirstPage = true;
 
   spots.forEach(spot => {
     const photos = spot.photos.filter(p => p.active).map(p => p.url);
     const name = spot.name || '（箇所名未入力）';
-    const perPage = isFirstPhotoPage ? 4 : 8;
 
-    const firstGroup = photos.slice(0, perPage);
-    while (firstGroup.length < perPage) firstGroup.push(null);
-    pages.push({ type: isFirstPhotoPage ? 'first' : 'photo', name, photos: firstGroup });
-    isFirstPhotoPage = false;
-
-    let i = perPage;
-    while (i < photos.length) {
-      const group = photos.slice(i, i + 8);
-      while (group.length < 8) group.push(null);
-      pages.push({ type: 'photo', name, photos: group });
-      i += 8;
+    if (isVeryFirstPage) {
+      // 1ページ目：写真は4枚固定
+      const group = photos.slice(0, 4);
+      while (group.length < 4) group.push(null);
+      pages.push({ type: 'first', name, photos: group });
+      isVeryFirstPage = false;
+      // 残り写真があれば8枚ずつ追加
+      let i = 4;
+      while (i < photos.length) {
+        const g = photos.slice(i, i + 8);
+        while (g.length < 8) g.push(null);
+        pages.push({ type: 'photo', name, photos: g });
+        i += 8;
+      }
+    } else {
+      // 2つ目以降の場所：必ず新ページから、8枚ずつ
+      const firstGroup = photos.slice(0, 8);
+      while (firstGroup.length < 8) firstGroup.push(null);
+      pages.push({ type: 'photo', name, photos: firstGroup });
+      let i = 8;
+      while (i < photos.length) {
+        const g = photos.slice(i, i + 8);
+        while (g.length < 8) g.push(null);
+        pages.push({ type: 'photo', name, photos: g });
+        i += 8;
+      }
     }
   });
 
