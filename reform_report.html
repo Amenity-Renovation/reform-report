@@ -397,15 +397,13 @@ function removeSpot(id) {
 
 function addPhotos(event, id, sidx) {
   const files = Array.from(event.target.files);
-  const grid = document.getElementById('pg-'+id);
   let loaded = 0;
   files.forEach(file => {
     const reader = new FileReader();
     reader.onload = e => {
-      const url = e.target.result;
-      spots[sidx].photos.push({ url, active: true });
-      renderPhotos(id, sidx);
+      spots[sidx].photos.push({ url: e.target.result });
       loaded++;
+      if (loaded === files.length) renderPhotos(id, sidx);
     };
     reader.readAsDataURL(file);
   });
@@ -415,7 +413,6 @@ function renderPhotos(id, sidx) {
   const grid = document.getElementById('pg-'+id);
   grid.innerHTML = '';
   spots[sidx].photos.forEach((photo, pidx) => {
-    if (!photo.active) return;
     const wrap = document.createElement('div');
     wrap.className = 'photo-thumb';
     wrap.draggable = true;
@@ -426,12 +423,10 @@ function renderPhotos(id, sidx) {
       <img src="${photo.url}" style="pointer-events:none">
       <button class="photo-thumb-del" onclick="removePhoto('${id}',${sidx},${pidx})">×</button>
     `;
-    // Desktop drag events
     wrap.addEventListener('dragstart', onDragStart);
     wrap.addEventListener('dragover',  onDragOver);
     wrap.addEventListener('drop',      onDrop);
     wrap.addEventListener('dragend',   onDragEnd);
-    // Touch events for mobile
     wrap.addEventListener('touchstart', onTouchStart, { passive: true });
     wrap.addEventListener('touchmove',  onTouchMove,  { passive: false });
     wrap.addEventListener('touchend',   onTouchEnd);
@@ -440,7 +435,7 @@ function renderPhotos(id, sidx) {
 }
 
 function removePhoto(id, sidx, pidx) {
-  spots[sidx].photos[pidx].active = false;
+  spots[sidx].photos.splice(pidx, 1);
   renderPhotos(id, sidx);
 }
 
@@ -448,18 +443,16 @@ function removePhoto(id, sidx, pidx) {
 let dragSrc = null;
 function onDragStart(e) { dragSrc = this; this.classList.add('dragging'); }
 function onDragOver(e)  { e.preventDefault(); this.classList.add('drag-over'); }
-function onDragEnd()    { document.querySelectorAll('.photo-thumb').forEach(el => { el.classList.remove('dragging','drag-over'); }); }
+function onDragEnd()    { document.querySelectorAll('.photo-thumb').forEach(el => el.classList.remove('dragging','drag-over')); }
 function onDrop(e) {
   e.preventDefault();
   if (dragSrc === this) return;
   const sidx = parseInt(this.dataset.sidx);
-  const fromIdx = parseInt(dragSrc.dataset.pidx);
-  const toIdx   = parseInt(this.dataset.pidx);
-  const id = this.dataset.id;
-  const active = spots[sidx].photos.filter(p => p.active);
-  const moved = active.splice(fromIdx, 1)[0];
-  active.splice(toIdx, 0, moved);
-  spots[sidx].photos = active;
+  const from = parseInt(dragSrc.dataset.pidx);
+  const to   = parseInt(this.dataset.pidx);
+  const id   = this.dataset.id;
+  const moved = spots[sidx].photos.splice(from, 1)[0];
+  spots[sidx].photos.splice(to, 0, moved);
   renderPhotos(id, sidx);
 }
 
@@ -494,12 +487,10 @@ function onTouchEnd(e) {
   const target = under && under.closest('.photo-thumb');
   document.querySelectorAll('.photo-thumb').forEach(el => el.classList.remove('drag-over'));
   if (target && target !== touchDragEl) {
-    const fromIdx = parseInt(touchDragEl.dataset.pidx);
-    const toIdx   = parseInt(target.dataset.pidx);
-    const active = spots[touchSidx].photos.filter(p => p.active);
-    const moved = active.splice(fromIdx, 1)[0];
-    active.splice(toIdx, 0, moved);
-    spots[touchSidx].photos = active;
+    const from = parseInt(touchDragEl.dataset.pidx);
+    const to   = parseInt(target.dataset.pidx);
+    const moved = spots[touchSidx].photos.splice(from, 1)[0];
+    spots[touchSidx].photos.splice(to, 0, moved);
     renderPhotos(touchId, touchSidx);
   }
   touchDragEl = null;
@@ -531,7 +522,7 @@ function buildPreview() {
     spotsEl.innerHTML = '<div style="font-size:13px;color:var(--sub);">作業箇所が登録されていません</div>';
   } else {
     spots.forEach(spot => {
-      const photos = spot.photos.filter(p => p.active);
+      const photos = spot.photos.map(p => p.url);
       const div = document.createElement('div');
       div.className = 'p-spot';
       // 写真を2枚ずつの行に分割（各行がページをまたがない）
@@ -540,7 +531,7 @@ function buildPreview() {
         for (let i = 0; i < photos.length; i += 2) {
           const group = photos.slice(i, i + 2);
           photosHTML += '<div class="print-photo-page p-photo-grid">' +
-            group.map(p => `<div class="p-photo"><img src="${p.url}"></div>`).join('') +
+            group.map(url => `<div class="p-photo"><img src="${url}"></div>`).join('') +
             '</div>';
         }
       } else {
@@ -612,7 +603,7 @@ async function doPrint() {
   let pages = [];
   let isVeryFirstPage = true;
   spots.forEach(spot => {
-    const photos = spot.photos.filter(p => p.active).map(p => p.url);
+    const photos = spot.photos.map(p => p.url);
     const name = spot.name || '（箇所名未入力）';
     if (isVeryFirstPage) {
       const g = photos.slice(0, 4); while (g.length < 4) g.push(null);
