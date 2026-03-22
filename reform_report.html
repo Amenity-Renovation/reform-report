@@ -585,6 +585,14 @@ async function doPrint() {
   if (isIOSChrome()) return;
 
   const btn = document.getElementById('btn-pdf-main');
+  // 全画像を先に読み込む
+  btn.textContent = '⏳ 写真読み込み中...';
+  const allUrls = pages.flatMap(p => p.photos);
+  const allImages = await Promise.all(allUrls.map(url => loadImage(url)));
+  // urlをキーにしたMapを作る
+  const imgMap = new Map();
+  allUrls.forEach((url, i) => { if (url) imgMap.set(url, allImages[i]); });
+
   btn.textContent = '⏳ PDF生成中...';
   btn.disabled = true;
 
@@ -717,8 +725,7 @@ async function doPrint() {
     const cellHCalc = (availH - gap * (rows2 - 1)) / rows2;
     const cellH = Math.min(cellHCalc, 270);
 
-    const imgPromises = page.photos.map(url => loadImage(url));
-    const images = await Promise.all(imgPromises);
+    const images = page.photos.map(url => url ? (imgMap.get(url) || null) : null);
 
     images.forEach((img, idx) => {
       const col = idx % cols;
